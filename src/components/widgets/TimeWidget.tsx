@@ -39,17 +39,17 @@ export function TimeWidget() {
     <Card className="h-full">
       <CardContent className="h-full flex flex-col items-center justify-center p-4">
         {/* Large time display */}
-        <div className="text-4xl sm:text-5xl font-light-numbers text-foreground">
+        <div className="text-5xl sm:text-6xl font-light-numbers text-foreground">
           {timeString}
         </div>
 
         {/* Date */}
-        <div className="text-lg font-light text-foreground mt-2">
+        <div className="text-xl font-light text-foreground mt-2">
           {dateString}
         </div>
 
         {/* Day of week */}
-        <div className="text-sm text-muted-foreground mt-0.5">
+        <div className="text-base text-muted-foreground mt-0.5">
           {dayOfWeek}
         </div>
       </CardContent>

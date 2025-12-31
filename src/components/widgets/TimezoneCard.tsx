@@ -84,17 +84,17 @@ export function TimezoneCard({ config }: TimezoneCardProps) {
     <Card className="h-full">
       <CardContent className="h-full flex flex-col items-center justify-center p-3">
         {/* City name */}
-        <div className="text-[11px] font-medium-labels text-foreground mb-1.5 truncate max-w-full">
+        <div className="text-xs font-medium-labels text-foreground mb-1.5 truncate max-w-full">
           {config.name}
         </div>
 
         {/* Time */}
-        <div className="text-lg sm:text-xl font-light-numbers text-foreground">
+        <div className="text-xl sm:text-2xl font-light-numbers text-foreground">
           {timeString}
         </div>
 
         {/* Offset */}
-        <div className="text-[10px] text-muted-foreground mt-1">
+        <div className="text-xs text-muted-foreground mt-1">
           {getOffset()}
         </div>
       </CardContent>

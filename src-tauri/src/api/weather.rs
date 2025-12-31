@@ -1,6 +1,6 @@
 use super::{HourlyWeather, WeatherData, WeatherLocation};
 use crate::config::WeatherConfig;
-use chrono::{Local, Timelike};
+use chrono::Local;
 use reqwest::Client;
 use serde::Deserialize;
 
@@ -75,28 +75,14 @@ pub async fn fetch_weather(config: &WeatherConfig) -> Result<WeatherData, String
         .await
         .map_err(|e| format!("Failed to parse weather response: {}", e))?;
 
-    let current_hour = Local::now().hour() as usize;
-
-    // Build hourly forecast
+    // Build hourly forecast for fixed 0-23 hours (12am to 11pm)
     let mut hourly_forecast = Vec::with_capacity(24);
-    for i in 0..24 {
-        let hour_index = (current_hour + i) % 24;
-        let data_index = current_hour + i;
-
-        let temp = if data_index < data.hourly.temperature_2m.len() {
-            data.hourly.temperature_2m[data_index]
-        } else {
-            data.hourly.temperature_2m.get(hour_index).copied().unwrap_or(0.0)
-        };
-
-        let code = if data_index < data.hourly.weather_code.len() {
-            data.hourly.weather_code[data_index]
-        } else {
-            data.hourly.weather_code.get(hour_index).copied().unwrap_or(0)
-        };
+    for hour in 0..24 {
+        let temp = data.hourly.temperature_2m.get(hour).copied().unwrap_or(0.0);
+        let code = data.hourly.weather_code.get(hour).copied().unwrap_or(0);
 
         hourly_forecast.push(HourlyWeather {
-            hour: hour_index as i32,
+            hour: hour as i32,
             temperature: temp.round() as i32,
             condition: map_weather_code(code).to_string(),
         });

@@ -1,13 +1,24 @@
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent } from '@/components/ui/card';
 import { useWeather } from '@/hooks/useWeather';
 
 /**
  * WeatherWidget - Weather display with hourly forecast
- * Shows condition, feels-like temp, hourly bar chart, and location
+ * Shows condition, feels-like temp, hourly bar chart (12am-12am), and location
+ * Current hour is highlighted
  */
 export function WeatherWidget() {
   const { data: weather, isLoading, error } = useWeather();
+  const [currentHour, setCurrentHour] = useState(new Date().getHours());
+
+  // Update current hour every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentHour(new Date().getHours());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Loading skeleton
   if (isLoading && !weather) {
@@ -16,7 +27,7 @@ export function WeatherWidget() {
         <CardContent className="h-full flex flex-col p-4 animate-pulse">
           <div className="h-5 bg-muted rounded w-24 mx-auto" />
           <div className="h-3 bg-muted rounded w-20 mx-auto mt-2" />
-          <div className="flex-1 flex items-end gap-1 mt-3 mb-1.5">
+          <div className="flex-1 flex items-end gap-0.5 mt-3 mb-1.5">
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="flex-1 bg-muted rounded-sm" style={{ height: '50%' }} />
             ))}
@@ -48,13 +59,12 @@ export function WeatherWidget() {
 
   // Format hour to 12h format
   const formatHour = (hour: number) => {
-    const ampm = hour >= 12 ? 'pm' : 'am';
+    const ampm = hour >= 12 ? 'p' : 'a';
     const displayHour = hour % 12 || 12;
     return `${displayHour}${ampm}`;
   };
 
-  // Prepare chart data - every 2 hours
-  // Use absolute temperature for bar height so negative temps still render upward
+  // Prepare chart data - every 2 hours from 12am to 10pm (12 bars)
   const chartData = weather.hourlyForecast
     .filter((_, index) => index % 2 === 0)
     .map((hourData) => ({
@@ -63,6 +73,7 @@ export function WeatherWidget() {
       temperature: hourData.temperature,
       absTemperature: Math.abs(hourData.temperature),
       isDay: hourData.hour >= sunriseHour && hourData.hour < sunsetHour,
+      isCurrent: hourData.hour === currentHour || hourData.hour === currentHour - 1,
     }));
 
   // Condition display text (capitalize each word, replace hyphens with spaces)
@@ -75,20 +86,31 @@ export function WeatherWidget() {
   const unit = weather.unit === 'celsius' ? 'C' : 'F';
   const feelsLikeText = `${weather.feelsLike}°${unit}`;
 
+  // Get fill color for each bar
+  const getBarFill = (entry: typeof chartData[0]) => {
+    if (entry.isCurrent) {
+      return 'hsl(var(--foreground))'; // Current hour - foreground color
+    }
+    if (entry.isDay) {
+      return 'hsl(45 70% 65%)'; // Day hours - warm amber
+    }
+    return 'hsl(var(--muted-foreground) / 0.25)'; // Night hours - muted
+  };
+
   return (
     <Card className="h-full">
       <CardContent className="h-full flex flex-col p-4">
         {/* Condition */}
-        <div className="text-base font-medium-labels text-foreground text-center">
+        <div className="text-lg font-medium-labels text-foreground text-center">
           {conditionText}
         </div>
 
         {/* Feels like */}
-        <div className="text-xs text-muted-foreground mt-0.5 text-center">
+        <div className="text-sm text-muted-foreground mt-0.5 text-center">
           Feels like {feelsLikeText}
         </div>
 
-        {/* Hourly bar chart */}
+        {/* Hourly bar chart - all 24 hours */}
         <div className="flex-1 mt-2 mb-1 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
@@ -109,7 +131,7 @@ export function WeatherWidget() {
                 {chartData.map((entry) => (
                   <Cell
                     key={entry.hour}
-                    fill={entry.isDay ? 'hsl(45 70% 65%)' : 'hsl(var(--muted-foreground) / 0.25)'}
+                    fill={getBarFill(entry)}
                   />
                 ))}
               </Bar>
@@ -118,13 +140,13 @@ export function WeatherWidget() {
         </div>
 
         {/* Sunrise/Sunset times */}
-        <div className="flex justify-between text-[10px] text-muted-foreground mb-2">
+        <div className="flex justify-between text-xs text-muted-foreground mb-2">
           <span>Sunrise {formatHour(sunriseHour)}</span>
           <span>Sunset {formatHour(sunsetHour)}</span>
         </div>
 
         {/* Location */}
-        <div className="text-xs text-center text-muted-foreground">
+        <div className="text-sm text-center text-muted-foreground">
           {weather.location.name}
         </div>
       </CardContent>
