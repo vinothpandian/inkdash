@@ -1,10 +1,7 @@
 import { useMemo } from 'react'
-import { Card } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { CALENDAR_COLORS, type ProcessedEvent } from '@/config/calendar'
 import {
   isSameDay,
-  formatTime,
   calculateEventPosition,
   getHoursArray,
   getStartOfDay,
@@ -90,119 +87,109 @@ export function MultiDayView({ currentDate, events, numberOfDays = 3 }: MultiDay
         })}
       </div>
 
-      {/* Time grid with events */}
-      <ScrollArea className="flex-1">
-        <div
-          className="grid relative"
-          style={{ gridTemplateColumns: `60px repeat(${numberOfDays}, 1fr)` }}
-        >
-          {/* Hours column */}
-          <div className="border-r border-border bg-muted/30">
-            {hours.map((hour) => (
-              <div
-                key={hour}
-                className="h-16 px-2 py-1 text-xs text-muted-foreground text-right border-b border-border"
-              >
-                {hour === 0
-                  ? '12 AM'
-                  : hour < 12
-                    ? `${hour} AM`
-                    : hour === 12
-                      ? '12 PM'
-                      : `${hour - 12} PM`}
+      {/* Time grid with events - fills remaining space, no scroll */}
+      <div
+        className="flex-1 min-h-0 grid"
+        style={{ gridTemplateColumns: `40px repeat(${numberOfDays}, 1fr)` }}
+      >
+        {/* Hours column */}
+        <div className="border-r border-border bg-muted/30 flex flex-col">
+          {hours.map((hour) => (
+            <div
+              key={hour}
+              className="flex-1 px-1 text-[10px] text-muted-foreground text-right border-b border-border/30 flex items-start justify-end"
+            >
+              {hour === 0
+                ? '12a'
+                : hour < 12
+                  ? `${hour}a`
+                  : hour === 12
+                    ? '12p'
+                    : `${hour - 12}p`}
+            </div>
+          ))}
+        </div>
+
+        {/* Day columns */}
+        {displayDates.map((date) => {
+          const isToday = isSameDay(date, today)
+          const dayKey = date.toDateString()
+          const dayEvents = eventsByDay.get(dayKey) || []
+
+          return (
+            <div
+              key={date.toISOString()}
+              className={`relative border-l border-border flex flex-col ${
+                isToday ? 'bg-accent/10' : ''
+              }`}
+            >
+              {/* Hour grid lines */}
+              {hours.map((hour) => (
+                <div key={hour} className="flex-1 border-b border-border/30" />
+              ))}
+
+              {/* Events for this day */}
+              <div className="absolute inset-0 pointer-events-none">
+                {dayEvents
+                  .filter((event) => !event.isAllDay)
+                  .map((event) => {
+                    const position = calculateEventPosition(event.startTime, event.endTime)
+                    const colorConfig = CALENDAR_COLORS[event.calendarColor]
+                    return (
+                      <div
+                        key={event.id}
+                        className={`absolute left-0.5 right-0.5 pointer-events-auto cursor-pointer hover:brightness-95 transition-all overflow-hidden rounded-sm ${colorConfig.bg} border-l-2 ${colorConfig.border}`}
+                        style={{
+                          top: `${position.top}%`,
+                          height: `${Math.max(position.height, 2)}%`,
+                        }}
+                        onClick={() => {
+                          if (event.url) {
+                            window.open(event.url, '_blank')
+                          }
+                        }}
+                      >
+                        <div className="px-1 h-full">
+                          <div
+                            className={`text-[10px] font-medium truncate leading-tight ${colorConfig.text}`}
+                          >
+                            {event.title}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
               </div>
-            ))}
-          </div>
 
-          {/* Day columns */}
-          {displayDates.map((date) => {
-            const isToday = isSameDay(date, today)
-            const dayKey = date.toDateString()
-            const dayEvents = eventsByDay.get(dayKey) || []
-
-            return (
-              <div
-                key={date.toISOString()}
-                className={`relative border-l border-border ${
-                  isToday ? 'bg-accent/10' : ''
-                }`}
-              >
-                {/* Hour grid lines */}
-                {hours.map((hour) => (
-                  <div key={hour} className="h-16 border-b border-border/50" />
-                ))}
-
-                {/* Events for this day */}
-                <div className="absolute inset-0 pointer-events-none">
+              {/* All-day events */}
+              {dayEvents.filter((event) => event.isAllDay).length > 0 && (
+                <div className="absolute top-0 left-0.5 right-0.5 space-y-0.5 pointer-events-auto">
                   {dayEvents
-                    .filter((event) => !event.isAllDay)
+                    .filter((event) => event.isAllDay)
                     .map((event) => {
-                      const position = calculateEventPosition(event.startTime, event.endTime)
                       const colorConfig = CALENDAR_COLORS[event.calendarColor]
                       return (
-                        <Card
+                        <div
                           key={event.id}
-                          className="absolute left-1 right-1 pointer-events-auto cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
-                          style={{
-                            top: `${position.top}%`,
-                            height: `${position.height}%`,
-                          }}
+                          className={`px-1 text-[10px] ${colorConfig.bg} cursor-pointer hover:brightness-95 transition-all border-l-2 ${colorConfig.border} rounded-sm`}
                           onClick={() => {
                             if (event.url) {
                               window.open(event.url, '_blank')
                             }
                           }}
                         >
-                          <div
-                            className={`p-1 h-full ${colorConfig.bg} border-l-2 ${colorConfig.border}`}
-                          >
-                            <div className={`text-xs font-semibold truncate ${colorConfig.text}`}>
-                              {event.title}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {formatTime(event.startTime)}
-                            </div>
-                            {event.location && (
-                              <div className="text-xs text-muted-foreground truncate">
-                                {event.location}
-                              </div>
-                            )}
+                          <div className={`font-medium truncate ${colorConfig.text}`}>
+                            {event.title}
                           </div>
-                        </Card>
+                        </div>
                       )
                     })}
                 </div>
-
-                {/* All-day events */}
-                {dayEvents.filter((event) => event.isAllDay).length > 0 && (
-                  <div className="absolute top-0 left-1 right-1 space-y-1 pointer-events-auto">
-                    {dayEvents
-                      .filter((event) => event.isAllDay)
-                      .map((event) => {
-                        const colorConfig = CALENDAR_COLORS[event.calendarColor]
-                        return (
-                          <Card
-                            key={event.id}
-                            className={`p-1 text-xs ${colorConfig.bg} cursor-pointer hover:shadow-md transition-all border-l-2 ${colorConfig.border}`}
-                            onClick={() => {
-                              if (event.url) {
-                                window.open(event.url, '_blank')
-                              }
-                            }}
-                          >
-                            <div className={`font-semibold truncate ${colorConfig.text}`}>
-                              {event.title}
-                            </div>
-                          </Card>
-                        )
-                      })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </ScrollArea>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
