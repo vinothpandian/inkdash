@@ -54,12 +54,13 @@ interface TickTickApiProject {
 }
 
 /**
- * Fetch all tasks from TickTick
+ * Fetch project data including tasks
+ * TickTick API requires fetching tasks per-project via /project/{projectId}/data
  */
-async function fetchTasks(): Promise<TickTickTask[]> {
+async function fetchProjectData(projectId: string): Promise<{ project: TickTickApiProject; tasks: TickTickApiTask[] }> {
   const { accessToken } = getCredentials()
 
-  const response = await fetch(`${TICKTICK_API_BASE}/task`, {
+  const response = await fetch(`${TICKTICK_API_BASE}/project/${projectId}/data`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
@@ -71,23 +72,7 @@ async function fetchTasks(): Promise<TickTickTask[]> {
     throw new Error(`TickTick API error: ${response.status} ${response.statusText}`)
   }
 
-  const tasks: TickTickApiTask[] = await response.json()
-
-  // Filter out completed tasks and map to our format
-  return tasks
-    .filter(task => task.status === 0) // 0 = not completed
-    .map(task => ({
-      id: task.id,
-      title: task.title || task.content || 'Untitled Task',
-      isCompleted: false,
-      priority: task.priority,
-      dueDate: task.dueDate,
-      startDate: task.startDate,
-      projectId: task.projectId,
-      tags: task.tags || [],
-      createdTime: task.createdTime,
-      modifiedTime: task.modifiedTime,
-    }))
+  return response.json()
 }
 
 /**
@@ -123,24 +108,46 @@ async function fetchProjects(): Promise<TickTickProject[]> {
 
 /**
  * Fetch all TickTick data (tasks and projects)
+ * Strategy: First get all projects, then fetch data for each project
  */
 export async function fetchTickTick(): Promise<TickTickData> {
   try {
-    // Fetch tasks and projects in parallel
-    const [tasks, projects] = await Promise.all([
-      fetchTasks(),
-      fetchProjects(),
-    ])
+    // First fetch all projects
+    const projects = await fetchProjects()
 
-    // Map project names to tasks
+    // Then fetch data (including tasks) for each project in parallel
+    const projectDataResults = await Promise.all(
+      projects.map(project => fetchProjectData(project.id))
+    )
+
+    // Combine all tasks from all projects
+    const allTasks: TickTickTask[] = []
     const projectMap = new Map(projects.map(p => [p.id, p.name]))
-    const tasksWithProjects = tasks.map(task => ({
-      ...task,
-      projectName: projectMap.get(task.projectId),
-    }))
+
+    for (const projectData of projectDataResults) {
+      const tasks = projectData.tasks || []
+      for (const task of tasks) {
+        // Filter out completed tasks (status 0 = not completed, status 2 = completed)
+        if (task.status === 0) {
+          allTasks.push({
+            id: task.id,
+            title: task.title || task.content || 'Untitled Task',
+            isCompleted: false,
+            priority: task.priority,
+            dueDate: task.dueDate,
+            startDate: task.startDate,
+            projectId: task.projectId,
+            projectName: projectMap.get(task.projectId),
+            tags: task.tags || [],
+            createdTime: task.createdTime,
+            modifiedTime: task.modifiedTime,
+          })
+        }
+      }
+    }
 
     return {
-      tasks: tasksWithProjects,
+      tasks: allTasks,
       projects,
       lastUpdated: new Date(),
     }
