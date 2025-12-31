@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import type { StockData } from '@/types';
 
 interface StockCardProps {
@@ -6,10 +6,10 @@ interface StockCardProps {
 }
 
 /**
- * Sparkline - Simple SVG line chart for stock price history
- * Renders a smooth line showing price trend
+ * AreaChart - Elegant area chart with gradient fill
+ * The chart is the hero element of the card
  */
-function Sparkline({
+function AreaChart({
   data,
   isPositive,
 }: {
@@ -18,9 +18,11 @@ function Sparkline({
 }) {
   if (!data || data.length < 2) return null;
 
-  const width = 70;
-  const height = 28;
-  const padding = 2;
+  const width = 200;
+  const height = 80;
+  const paddingX = 0;
+  const paddingTop = 8;
+  const paddingBottom = 0;
 
   // Calculate min/max for scaling
   const min = Math.min(...data);
@@ -29,40 +31,69 @@ function Sparkline({
 
   // Generate SVG path points
   const points = data.map((value, index) => {
-    const x = padding + (index / (data.length - 1)) * (width - padding * 2);
-    const y = height - padding - ((value - min) / range) * (height - padding * 2);
-    return `${x},${y}`;
+    const x = paddingX + (index / (data.length - 1)) * (width - paddingX * 2);
+    const y = paddingTop + (1 - (value - min) / range) * (height - paddingTop - paddingBottom);
+    return { x, y };
   });
 
-  const pathD = `M ${points.join(' L ')}`;
+  // Create line path
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`).join(' ');
+
+  // Create area path (close the shape)
+  const areaPath = `${linePath} L ${width},${height} L 0,${height} Z`;
+
+  const gradientId = `gradient-${isPositive ? 'up' : 'down'}-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Colors based on performance
+  const lineColor = isPositive ? 'hsl(var(--accent-warm))' : 'hsl(var(--muted-foreground))';
+  const gradientStart = isPositive ? 'hsl(var(--accent-warm) / 0.3)' : 'hsl(var(--muted-foreground) / 0.15)';
+  const gradientEnd = isPositive ? 'hsl(var(--accent-warm) / 0.02)' : 'hsl(var(--muted-foreground) / 0.02)';
 
   return (
     <svg
-      width={width}
-      height={height}
+      width="100%"
+      height="100%"
       viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
       className="overflow-visible"
     >
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={gradientStart} />
+          <stop offset="100%" stopColor={gradientEnd} />
+        </linearGradient>
+      </defs>
+
+      {/* Area fill */}
       <path
-        d={pathD}
+        d={areaPath}
+        fill={`url(#${gradientId})`}
+      />
+
+      {/* Line */}
+      <path
+        d={linePath}
         fill="none"
-        stroke={isPositive ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))'}
-        strokeWidth={1.5}
+        stroke={lineColor}
+        strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+
+      {/* End dot */}
+      <circle
+        cx={points[points.length - 1].x}
+        cy={points[points.length - 1].y}
+        r={3}
+        fill={lineColor}
       />
     </svg>
   );
 }
 
 /**
- * StockCard - Stock display card with ticker, price, change, and sparkline
- * Shows:
- * - Ticker symbol (top-left, bold)
- * - Percentage change (top-right, colored)
- * - Company name (below ticker, muted)
- * - Current price with currency (bottom-left)
- * - Mini sparkline chart (bottom-right)
+ * StockCard - Refined stock display with hero chart
+ * The area chart dominates the card with data overlaid
  */
 export function StockCard({ stock }: StockCardProps) {
   const isPositive = stock.changePercent >= 0;
@@ -74,35 +105,51 @@ export function StockCard({ stock }: StockCardProps) {
   const priceText = `${stock.currency}${stock.price.toFixed(2)}`;
 
   return (
-    <Card className="h-full">
-      <CardContent className="h-full flex flex-col justify-between p-4">
-        {/* Top row: Ticker and Change */}
+    <Card className="h-full relative overflow-hidden">
+      {/* Chart as background - the hero element */}
+      <div className="absolute inset-0 flex items-end">
+        <div className="w-full h-[60%]">
+          <AreaChart data={stock.sparklineData} isPositive={isPositive} />
+        </div>
+      </div>
+
+      {/* Content overlay */}
+      <div className="relative h-full flex flex-col p-4 z-10">
+        {/* Top section: All info at top for visibility */}
         <div className="flex justify-between items-start">
-          <div className="text-base font-semibold text-foreground">
-            {stock.ticker}
+          {/* Left: Ticker & Name */}
+          <div>
+            <div
+              className="text-lg font-semibold text-foreground tracking-tight"
+              style={{ textShadow: '0 1px 8px hsl(var(--card)), 0 0 20px hsl(var(--card))' }}
+            >
+              {stock.ticker}
+            </div>
+            <div
+              className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-[100px]"
+              style={{ textShadow: '0 1px 6px hsl(var(--card))' }}
+            >
+              {stock.name}
+            </div>
           </div>
-          <div
-            className={`text-xs font-medium-labels ${
-              isPositive ? 'text-foreground' : 'text-muted-foreground'
-            }`}
-          >
-            {changeText}
-          </div>
-        </div>
 
-        {/* Company name */}
-        <div className="text-xs text-muted-foreground -mt-1 truncate">
-          {stock.name}
-        </div>
-
-        {/* Bottom row: Price and Sparkline */}
-        <div className="flex justify-between items-end mt-auto pt-2">
-          <div className="text-lg font-light-numbers text-foreground">
-            {priceText}
+          {/* Right: Price & Change */}
+          <div className="text-right">
+            <div
+              className="text-2xl font-light-numbers text-foreground"
+              style={{ textShadow: '0 2px 12px hsl(var(--card)), 0 0 30px hsl(var(--card))' }}
+            >
+              {priceText}
+            </div>
+            <div
+              className={`text-sm font-medium-labels mt-0.5 ${isPositive ? 'text-accent-warm' : 'text-muted-foreground'}`}
+              style={{ textShadow: '0 1px 8px hsl(var(--card))' }}
+            >
+              {changeText} <span className="text-xs">({isPositive ? '↑' : '↓'}{Math.abs(stock.change).toFixed(2)})</span>
+            </div>
           </div>
-          <Sparkline data={stock.sparklineData} isPositive={isPositive} />
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }
