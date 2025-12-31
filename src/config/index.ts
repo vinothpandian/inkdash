@@ -6,8 +6,8 @@
 // Timezone configuration
 export { timezones } from './timezones'
 
-// Stock configuration and mock data
-export { stocks, mockStockData } from './stocks'
+// Stock configuration
+export { stocks } from './stocks'
 
-// Weather configuration and mock data
-export { weatherLocation, mockWeatherData, getMockWeatherData } from './weather'
+// Weather configuration
+export { weatherLocation } from './weather'

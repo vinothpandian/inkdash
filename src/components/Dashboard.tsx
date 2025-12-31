@@ -21,7 +21,7 @@ export function Dashboard() {
   // Theme management with toggle support
   const { isDark, toggleTheme } = useTheme();
 
-  const { currentPage, isSwiping, swipeOffset, handlers, goToPage, totalPages } = useSwipe({
+  const { currentPage, isSwiping, swipeOffset, handlers, goToPage } = useSwipe({
     totalPages: PAGES.length,
     threshold: 50,
     initialPage: 0,
