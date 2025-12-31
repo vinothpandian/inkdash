@@ -1,16 +1,16 @@
 # TickTick Integration Setup Guide
 
-This guide explains how to set up the TickTick API integration for the Tasks page in InkDash.
+This guide explains how to set up the TickTick API integration for the Tasks page in inkdash.
 
 ## Overview
 
-The Tasks page now uses the TickTick Open API to display your tasks in a clean, read-only interface with three filtering options:
+The Tasks page uses the TickTick Open API to display your tasks in a clean, read-only interface with three filtering options:
 
 - **Today**: Tasks due today or overdue
 - **This Week**: Tasks due within the next 7 days
 - **Backlog**: Tasks without a due date
 
-Tasks are automatically refreshed every 5 minutes and cached in localStorage for offline access.
+Tasks are automatically refreshed every 5 minutes.
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ You need a TickTick account and access to the TickTick Open API.
 3. Create a new OAuth application:
    - Click "Create Application"
    - Fill in the application details:
-     - **Name**: InkDash (or any name you prefer)
+     - **Name**: inkdash (or any name you prefer)
      - **Redirect URI**: `http://localhost:5173` (for development)
    - Save the application
 
@@ -35,7 +35,7 @@ You need a TickTick account and access to the TickTick Open API.
 
 TickTick uses OAuth 2.0 for authentication. You need to obtain an access token:
 
-### Option A: Use the Authorization Code Flow (Recommended)
+### Using the Authorization Code Flow
 
 1. Construct the authorization URL:
    ```
@@ -70,65 +70,57 @@ TickTick uses OAuth 2.0 for authentication. You need to obtain an access token:
    }
    ```
 
-### Option B: Use Personal Access Token (If Available)
+## Step 3: Configure inkdash
 
-Some API providers offer personal access tokens in the developer console. Check your TickTick developer settings for this option.
+Add your TickTick credentials to the config file:
 
-## Step 3: Configure Environment Variables
+**Config file location:**
+- **macOS**: `~/Library/Application Support/inkdash/config.toml`
+- **Linux**: `~/.config/inkdash/config.toml`
 
-1. Copy the `.env.example` file to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+Add the following section to your config:
 
-2. Edit `.env` and add your TickTick credentials:
-   ```env
-   VITE_TICKTICK_CLIENT_ID=your_client_id_here
-   VITE_TICKTICK_CLIENT_SECRET=your_client_secret_here
-   VITE_TICKTICK_ACCESS_TOKEN=your_access_token_here
-   ```
+```toml
+[ticktick]
+access_token = "your_access_token_here"
+```
 
-3. **Important**: Never commit your `.env` file to version control. It's already in `.gitignore`.
+See [`config/config.example.toml`](../config/config.example.toml) for a complete example.
 
-## Step 4: Start the Development Server
+## Step 4: Start the Application
 
 ```bash
-bun dev
+bun tauri:dev
 ```
 
 Navigate to the Tasks page and you should see your TickTick tasks loaded.
 
 ## Token Refresh
 
-Access tokens typically expire after a certain period (e.g., 1 hour). To handle this:
+Access tokens typically expire after a certain period. When your token expires:
 
-1. **Manual Refresh**: When your token expires, repeat Step 2 to get a new access token
-2. **Automatic Refresh** (Future Enhancement): Implement token refresh using the refresh token
+1. Repeat Step 2 to get a new access token
+2. Update the `access_token` in your config file
+3. Restart the application
 
 ## Troubleshooting
 
-### "TickTick credentials not configured" Error
+### "TickTick not configured" Error
 
-- Make sure your `.env` file exists and contains all three required variables
-- Restart the development server after creating or modifying the `.env` file
+- Make sure your config file exists and contains the `[ticktick]` section with `access_token`
+- Restart the application after modifying the config file
 
 ### "Failed to fetch TickTick tasks" Error
 
 - Check that your access token is valid and not expired
-- Verify that your Client ID and Client Secret are correct
-- Ensure you have the correct API scopes (`tasks:read` at minimum)
-- Check the browser console for detailed error messages
+- Verify that your token has the correct API scopes (`tasks:read` at minimum)
+- Check the Tauri console for detailed error messages
 
 ### No Tasks Displayed
 
 - Verify that you have active (non-completed) tasks in your TickTick account
 - Check the different filter tabs (Today, This Week, Backlog)
-- Open the browser console to check for any JavaScript errors
-
-### CORS Errors
-
-- The TickTick API should support CORS for web applications
-- If you encounter CORS issues, you may need to configure your OAuth application's allowed origins
+- Ensure your tasks have due dates set for Today/This Week filters
 
 ## Features
 
@@ -150,7 +142,6 @@ Each task shows:
 ### Auto-refresh
 
 - Tasks are automatically refreshed every 5 minutes
-- Data is cached in localStorage for faster loading
 
 ## API Reference
 
@@ -164,18 +155,6 @@ For full API documentation, visit: https://developer.ticktick.com/api
 ## Security Notes
 
 - Your access token grants access to your TickTick data - keep it secure
-- Never commit `.env` files to version control
-- Consider using environment-specific credentials for development vs production
+- Never share your config file with others
+- The config file is stored locally and never transmitted
 - Access tokens should be rotated regularly for security
-
-## Next Steps
-
-Consider enhancing the integration with:
-
-- Automatic token refresh using refresh tokens
-- Support for completing tasks (would require `tasks:write` scope)
-- Filtering by specific projects/lists
-- Search functionality
-- Task sorting options
-- Support for recurring tasks
-- Display of task notes/descriptions
