@@ -4,13 +4,42 @@ import { stocks as stockConfigs } from '@/config/stocks'
 const CORS_PROXY = 'https://corsproxy.io/?'
 const YAHOO_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart'
 
+// Currency symbol mapping (from Glance)
+const currencyToSymbol: Record<string, string> = {
+  USD: '$',
+  EUR: '€',
+  JPY: '¥',
+  CAD: 'C$',
+  AUD: 'A$',
+  GBP: '£',
+  CHF: 'Fr',
+  NZD: 'N$',
+  INR: '₹',
+  BRL: 'R$',
+  RUB: '₽',
+  TRY: '₺',
+  ZAR: 'R',
+  CNY: '¥',
+  KRW: '₩',
+  HKD: 'HK$',
+  SGD: 'S$',
+  SEK: 'kr',
+  NOK: 'kr',
+  DKK: 'kr',
+  PLN: 'zł',
+  PHP: '₱',
+}
+
 interface YahooChartResponse {
   chart: {
     result: Array<{
       meta: {
         regularMarketPrice: number
         previousClose: number
+        chartPreviousClose: number
         currency: string
+        shortName: string
+        priceHint: number
       }
       indicators: {
         quote: Array<{
@@ -44,28 +73,40 @@ async function fetchSingleStock(config: StockConfig): Promise<StockData> {
   }
 
   const result = data.chart.result[0]
-  const { regularMarketPrice, previousClose, currency } = result.meta
+  const { regularMarketPrice, chartPreviousClose, currency, shortName, priceHint } = result.meta
 
-  // Calculate change
-  const change = regularMarketPrice - previousClose
-  const changePercent = (change / previousClose) * 100
-
-  // Get sparkline data (last 20 non-null closing prices)
+  // Get sparkline data (last 21 non-null closing prices, like Glance)
   const closePrices = result.indicators.quote[0].close
     .filter((p): p is number => p !== null)
-    .slice(-20)
+    .slice(-21)
 
-  // Format currency symbol
-  const currencySymbol = currency === 'CAD' ? 'C$' : '$'
+  // Calculate previous price - prefer second-to-last chart price if available (like Glance)
+  let previous = regularMarketPrice
+  if (closePrices.length >= 2 && closePrices[closePrices.length - 2] !== 0) {
+    previous = closePrices[closePrices.length - 2]
+  } else if (chartPreviousClose) {
+    previous = chartPreviousClose
+  }
+
+  // Calculate percent change
+  const changePercent = previous ? ((regularMarketPrice - previous) / previous) * 100 : 0
+  const change = regularMarketPrice - previous
+
+  // Format currency symbol using comprehensive map
+  const currencySymbol = currencyToSymbol[currency?.toUpperCase()] ?? currency ?? '$'
+
+  // Use priceHint for decimal places (default to 2)
+  const decimals = priceHint ?? 2
 
   return {
     ticker: config.ticker,
-    name: config.name,
+    name: config.name || shortName,
     price: regularMarketPrice,
-    change: Number(change.toFixed(2)),
+    change: Number(change.toFixed(decimals)),
     changePercent: Number(changePercent.toFixed(2)),
     currency: currencySymbol,
     sparklineData: closePrices,
+    priceHint: decimals,
     lastUpdated: new Date(),
   }
 }

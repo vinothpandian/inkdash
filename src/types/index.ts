@@ -39,6 +39,8 @@ export interface StockData {
   currency: string
   /** Sparkline data points for mini chart visualization */
   sparklineData: number[]
+  /** Number of decimal places for price display (from Yahoo priceHint) */
+  priceHint?: number
   /** Timestamp of last update */
   lastUpdated: Date
 }

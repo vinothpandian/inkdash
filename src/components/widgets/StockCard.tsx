@@ -96,16 +96,23 @@ function AreaChart({
  * The area chart dominates the card with data overlaid
  */
 export function StockCard({ stock }: StockCardProps) {
-  const changePercent = stock.changePercent ?? 0;
-  const price = stock.price ?? 0;
-  const change = stock.change ?? 0;
+  // Handle null, undefined, and NaN values
+  const safeNumber = (val: number | null | undefined) =>
+    val == null || Number.isNaN(val) ? 0 : val;
+
+  const changePercent = safeNumber(stock.changePercent);
+  const price = safeNumber(stock.price);
+  const change = safeNumber(stock.change);
   const isPositive = changePercent >= 0;
+
+  // Use priceHint for decimal places (default to 2)
+  const decimals = stock.priceHint ?? 2;
 
   // Format percentage change with sign
   const changeText = `${isPositive ? '+' : ''}${changePercent.toFixed(2)}%`;
 
-  // Format price with currency
-  const priceText = `${stock.currency}${price.toFixed(2)}`;
+  // Format price with currency using priceHint
+  const priceText = `${stock.currency}${price.toFixed(decimals)}`;
 
   return (
     <Card className="h-full relative overflow-hidden">
@@ -148,7 +155,7 @@ export function StockCard({ stock }: StockCardProps) {
               className={`text-sm font-medium-labels mt-0.5 ${isPositive ? 'text-accent-warm' : 'text-muted-foreground'}`}
               style={{ textShadow: '0 1px 8px hsl(var(--card))' }}
             >
-              {changeText} <span className="text-xs">({isPositive ? '↑' : '↓'}{Math.abs(change).toFixed(2)})</span>
+              {changeText} <span className="text-xs">({isPositive ? '↑' : '↓'}{Math.abs(change).toFixed(decimals)})</span>
             </div>
           </div>
         </div>
