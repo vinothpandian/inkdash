@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import type { TickTickData } from '@/types'
-import { fetchTickTick, getCachedTickTick, cacheTickTick } from '@/api/ticktick'
 
 interface UseTickTickReturn {
   data: TickTickData | null
@@ -12,32 +12,38 @@ interface UseTickTickReturn {
 
 const REFRESH_INTERVAL = 5 * 60 * 1000 // 5 minutes
 
+// Transform the response from Tauri (dates come as strings)
+function transformTickTickData(data: TickTickData & { lastUpdated: string }): TickTickData {
+  return {
+    ...data,
+    lastUpdated: new Date(data.lastUpdated),
+  }
+}
+
 /**
  * Hook for fetching and managing TickTick tasks
- * - Fetches from TickTick API
- * - Caches data in localStorage
+ * - Fetches from TickTick API via Tauri backend
  * - Auto-refreshes every 5 minutes
  */
 export function useTickTick(): UseTickTickReturn {
-  const [data, setData] = useState<TickTickData | null>(() => getCachedTickTick())
-  const [isLoading, setIsLoading] = useState(!getCachedTickTick())
+  const [data, setData] = useState<TickTickData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     try {
-      const tickTickData = await fetchTickTick()
-      setData(tickTickData)
-      cacheTickTick(tickTickData)
+      const tickTickData = await invoke<TickTickData & { lastUpdated: string }>(
+        'fetch_ticktick_tasks'
+      )
+      setData(transformTickTickData(tickTickData))
       setError(null)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch TickTick tasks'
+      const message = err instanceof Error ? err.message : String(err)
       setError(message)
-      // Keep showing cached data on error
     }
   }, [])
 
   useEffect(() => {
-    // Initial fetch
     const initialFetch = async () => {
       setIsLoading(true)
       await refresh()
@@ -46,9 +52,7 @@ export function useTickTick(): UseTickTickReturn {
 
     initialFetch()
 
-    // Set up refresh interval
     const intervalId = setInterval(refresh, REFRESH_INTERVAL)
-
     return () => clearInterval(intervalId)
   }, [refresh])
 

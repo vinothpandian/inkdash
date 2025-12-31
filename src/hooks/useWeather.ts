@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import type { WeatherData } from '@/types'
-import { fetchWeather, getCachedWeather, cacheWeather } from '@/api/weather'
 
 interface UseWeatherReturn {
   data: WeatherData | null
@@ -12,32 +12,36 @@ interface UseWeatherReturn {
 
 const REFRESH_INTERVAL = 15 * 60 * 1000 // 15 minutes
 
+// Transform the response from Tauri (dates come as strings)
+function transformWeatherData(data: WeatherData & { lastUpdated: string }): WeatherData {
+  return {
+    ...data,
+    lastUpdated: new Date(data.lastUpdated),
+  }
+}
+
 /**
  * Hook for fetching and managing weather data
- * - Fetches from Open-Meteo API
- * - Caches data in localStorage
+ * - Fetches from Open-Meteo API via Tauri backend
  * - Auto-refreshes every 15 minutes
  */
 export function useWeather(): UseWeatherReturn {
-  const [data, setData] = useState<WeatherData | null>(() => getCachedWeather())
-  const [isLoading, setIsLoading] = useState(!getCachedWeather())
+  const [data, setData] = useState<WeatherData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     try {
-      const weatherData = await fetchWeather()
-      setData(weatherData)
-      cacheWeather(weatherData)
+      const weatherData = await invoke<WeatherData & { lastUpdated: string }>('fetch_weather')
+      setData(transformWeatherData(weatherData))
       setError(null)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch weather'
+      const message = err instanceof Error ? err.message : String(err)
       setError(message)
-      // Keep showing cached data on error
     }
   }, [])
 
   useEffect(() => {
-    // Initial fetch
     const initialFetch = async () => {
       setIsLoading(true)
       await refresh()
@@ -46,9 +50,7 @@ export function useWeather(): UseWeatherReturn {
 
     initialFetch()
 
-    // Set up refresh interval
     const intervalId = setInterval(refresh, REFRESH_INTERVAL)
-
     return () => clearInterval(intervalId)
   }, [refresh])
 

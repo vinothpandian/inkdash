@@ -1,0 +1,44 @@
+# inkdash Configuration
+# Copy this file to ~/.config/inkdash/config.toml and customize
+
+[weather]
+# Weather location coordinates (Toronto, Canada by default)
+latitude = 43.6532
+longitude = -79.3832
+timezone = "America/Toronto"
+
+[stocks]
+# Stock tickers to track (Yahoo Finance format)
+tickers = ["TRI", "VEQT.TO", "VGRO.TO", "ZGLD.TO"]
+
+[ticktick]
+# TickTick API access token
+# Get this from: https://developer.ticktick.com/
+access_token = ""
+
+[google_calendar]
+# Google OAuth credentials
+# Get these from: https://console.cloud.google.com/
+# 1. Create a project
+# 2. Enable the Google Calendar API
+# 3. Create OAuth 2.0 credentials (Desktop app type)
+client_id = ""
+client_secret = ""
+# These are populated automatically after OAuth flow
+access_token = ""
+refresh_token = ""
+token_expiry = ""
+
+[timezones]
+# Timezones to display on the overview page
+zones = [
+  { name = "Minnesota", tz = "America/Chicago" },
+  { name = "London", tz = "Europe/London" },
+  { name = "Zug", tz = "Europe/Zurich" },
+  { name = "India", tz = "Asia/Kolkata" },
+  { name = "Australia", tz = "Australia/Sydney" },
+]
+
+[display]
+# Start in fullscreen mode (toggle with F11)
+fullscreen = false

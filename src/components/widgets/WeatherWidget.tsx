@@ -125,7 +125,7 @@ export function WeatherWidget() {
 
         {/* Location */}
         <div className="text-xs text-center text-muted-foreground">
-          {weather.location.city}
+          {weather.location.name}
         </div>
       </CardContent>
     </Card>

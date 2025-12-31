@@ -70,10 +70,8 @@ export type WeatherCondition =
   | 'clear'
 
 export interface WeatherLocation {
-  /** City name */
-  city: string
-  /** Country or region */
-  country: string
+  /** Location name (e.g., "Toronto") */
+  name: string
   /** Latitude coordinate */
   latitude: number
   /** Longitude coordinate */
@@ -168,4 +166,34 @@ export interface TickTickData {
   projects: TickTickProject[]
   /** Timestamp of last update */
   lastUpdated: Date
+}
+
+// ============================================================================
+// Calendar Types
+// ============================================================================
+
+export interface CalendarEventDateTime {
+  /** ISO datetime string */
+  dateTime?: string
+  /** Date string (for all-day events) */
+  date?: string
+  /** Timezone */
+  timeZone?: string
+}
+
+export interface CalendarEvent {
+  /** Event ID */
+  id: string
+  /** Event title */
+  summary: string
+  /** Event description */
+  description?: string
+  /** Start time */
+  start: CalendarEventDateTime
+  /** End time */
+  end: CalendarEventDateTime
+  /** Event location */
+  location?: string
+  /** Link to event in Google Calendar */
+  htmlLink?: string
 }

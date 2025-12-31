@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import type { StockData } from '@/types'
-import { fetchStocks, getCachedStocks, cacheStocks } from '@/api/stocks'
 
 interface UseStocksReturn {
   stocks: StockData[]
@@ -12,32 +12,36 @@ interface UseStocksReturn {
 
 const REFRESH_INTERVAL = 5 * 60 * 1000 // 5 minutes
 
+// Transform the response from Tauri (dates come as strings)
+function transformStockData(data: (StockData & { lastUpdated: string })[]): StockData[] {
+  return data.map((stock) => ({
+    ...stock,
+    lastUpdated: new Date(stock.lastUpdated),
+  }))
+}
+
 /**
  * Hook for fetching and managing stock data
- * - Fetches from Yahoo Finance API
- * - Caches data in localStorage
+ * - Fetches from Yahoo Finance API via Tauri backend
  * - Auto-refreshes every 5 minutes
  */
 export function useStocks(): UseStocksReturn {
-  const [stocks, setStocks] = useState<StockData[]>(() => getCachedStocks() ?? [])
-  const [isLoading, setIsLoading] = useState(!getCachedStocks())
+  const [stocks, setStocks] = useState<StockData[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     try {
-      const stockData = await fetchStocks()
-      setStocks(stockData)
-      cacheStocks(stockData)
+      const stockData = await invoke<(StockData & { lastUpdated: string })[]>('fetch_stocks')
+      setStocks(transformStockData(stockData))
       setError(null)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch stocks'
+      const message = err instanceof Error ? err.message : String(err)
       setError(message)
-      // Keep showing cached data on error
     }
   }, [])
 
   useEffect(() => {
-    // Initial fetch
     const initialFetch = async () => {
       setIsLoading(true)
       await refresh()
@@ -46,19 +50,17 @@ export function useStocks(): UseStocksReturn {
 
     initialFetch()
 
-    // Set up refresh interval
     const intervalId = setInterval(refresh, REFRESH_INTERVAL)
-
     return () => clearInterval(intervalId)
   }, [refresh])
 
-  // Get the most recent update time from all stocks
-  const lastUpdated = stocks.length > 0
-    ? stocks.reduce((latest, stock) =>
-        stock.lastUpdated > latest ? stock.lastUpdated : latest,
-        stocks[0].lastUpdated
-      )
-    : null
+  const lastUpdated =
+    stocks.length > 0
+      ? stocks.reduce(
+          (latest, stock) => (stock.lastUpdated > latest ? stock.lastUpdated : latest),
+          stocks[0].lastUpdated
+        )
+      : null
 
   return {
     stocks,
