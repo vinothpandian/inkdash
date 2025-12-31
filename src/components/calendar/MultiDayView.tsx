@@ -1,16 +1,50 @@
 import { useMemo } from 'react'
 import { CALENDAR_COLORS, type ProcessedEvent } from '@/config/calendar'
-import {
-  isSameDay,
-  calculateEventPosition,
-  getHoursArray,
-  getStartOfDay,
-} from '@/utils/calendar'
+import { isSameDay, getHoursArray, getStartOfDay } from '@/utils/calendar'
 
 interface MultiDayViewProps {
   currentDate: Date
   events: ProcessedEvent[]
   numberOfDays?: number
+}
+
+// Get flex value for each hour - compress night hours, expand day hours
+function getHourFlex(hour: number): string {
+  if (hour >= 8 && hour < 20) {
+    return 'flex-[1.5]' // 8am-8pm: spacious
+  }
+  return 'flex-[0.3]' // 12am-8am, 8pm-12am: compressed
+}
+
+// Calculate event position with variable hour heights
+function calculateVariableEventPosition(
+  startTime: Date,
+  endTime: Date
+): { top: number; height: number } {
+  const startHour = startTime.getHours() + startTime.getMinutes() / 60
+  const endHour = endTime.getHours() + endTime.getMinutes() / 60
+
+  const getPosition = (hour: number): number => {
+    let pos = 0
+    for (let h = 0; h < hour; h++) {
+      pos += h >= 8 && h < 20 ? 1.5 : 0.3
+    }
+    const fractionalHour = hour % 1
+    if (fractionalHour > 0) {
+      const wholeHour = Math.floor(hour)
+      pos += fractionalHour * (wholeHour >= 8 && wholeHour < 20 ? 1.5 : 0.3)
+    }
+    return pos
+  }
+
+  const totalUnits = 8 * 0.3 + 12 * 1.5 + 4 * 0.3 // 21.6
+  const topUnits = getPosition(startHour)
+  const heightUnits = getPosition(endHour) - topUnits
+
+  return {
+    top: (topUnits / totalUnits) * 100,
+    height: Math.max((heightUnits / totalUnits) * 100, 1),
+  }
 }
 
 export function MultiDayView({ currentDate, events, numberOfDays = 3 }: MultiDayViewProps) {
@@ -52,31 +86,28 @@ export function MultiDayView({ currentDate, events, numberOfDays = 3 }: MultiDay
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with day names and dates */}
+      {/* Header with day names and dates - compact */}
       <div
         className="grid border-b border-border bg-card"
-        style={{ gridTemplateColumns: `60px repeat(${numberOfDays}, 1fr)` }}
+        style={{ gridTemplateColumns: `40px repeat(${numberOfDays}, 1fr)` }}
       >
-        <div className="p-2" /> {/* Empty corner cell */}
+        <div className="p-1" /> {/* Empty corner cell */}
         {displayDates.map((date) => {
           const isToday = isSameDay(date, today)
           return (
             <div
               key={date.toISOString()}
-              className={`p-2 text-center border-l border-border ${
+              className={`py-1 px-0.5 text-center border-l border-border ${
                 isToday ? 'bg-accent/50' : ''
               }`}
             >
-              <div className="text-xs font-medium text-muted-foreground">
+              <div className="text-[10px] text-muted-foreground leading-tight">
                 {date.toLocaleDateString('en-US', { weekday: 'short' })}
               </div>
-              <div className="text-sm font-medium text-muted-foreground">
-                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </div>
               <div
-                className={`text-lg font-semibold mt-1 ${
+                className={`text-sm font-semibold leading-tight ${
                   isToday
-                    ? 'bg-primary text-primary-foreground rounded-full w-8 h-8 mx-auto flex items-center justify-center'
+                    ? 'bg-primary text-primary-foreground rounded-full w-6 h-6 mx-auto flex items-center justify-center'
                     : ''
                 }`}
               >
@@ -97,7 +128,7 @@ export function MultiDayView({ currentDate, events, numberOfDays = 3 }: MultiDay
           {hours.map((hour) => (
             <div
               key={hour}
-              className="flex-1 px-1 text-[10px] text-muted-foreground text-right border-b border-border/30 flex items-start justify-end"
+              className={`${getHourFlex(hour)} px-1 text-[10px] text-muted-foreground text-right border-b border-border/30 flex items-start justify-end`}
             >
               {hour === 0
                 ? '12a'
@@ -125,7 +156,7 @@ export function MultiDayView({ currentDate, events, numberOfDays = 3 }: MultiDay
             >
               {/* Hour grid lines */}
               {hours.map((hour) => (
-                <div key={hour} className="flex-1 border-b border-border/30" />
+                <div key={hour} className={`${getHourFlex(hour)} border-b border-border/30`} />
               ))}
 
               {/* Events for this day */}
@@ -133,7 +164,7 @@ export function MultiDayView({ currentDate, events, numberOfDays = 3 }: MultiDay
                 {dayEvents
                   .filter((event) => !event.isAllDay)
                   .map((event) => {
-                    const position = calculateEventPosition(event.startTime, event.endTime)
+                    const position = calculateVariableEventPosition(event.startTime, event.endTime)
                     const colorConfig = CALENDAR_COLORS[event.calendarColor]
                     return (
                       <div
