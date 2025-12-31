@@ -20,18 +20,18 @@ import { timezones } from '@/config/timezones';
  */
 export function OverviewPage() {
   return (
-    <div className="h-full w-full page-padding flex flex-col overflow-hidden">
-      {/* Bento Grid Container - fills available space with uniform gaps */}
-      <div className="flex-1 grid grid-rows-[7fr_3fr] gap-4 max-w-5xl mx-auto w-full min-h-0">
-        {/* Top Row - 3 equal width cards */}
-        <div className="grid grid-cols-3 gap-4 min-h-0">
+    <div className="h-full w-full page-padding">
+      {/* Bento Grid Container - 60/40 split using calc to account for gap */}
+      <div className="h-full flex flex-col gap-4 max-w-5xl mx-auto w-full">
+        {/* Top Row - 3 equal width cards (60% minus half gap) */}
+        <div className="h-[calc(60%-0.5rem)] grid grid-cols-3 gap-4">
           <CalendarWidget />
           <TimeWidget />
           <WeatherWidget />
         </div>
 
-        {/* Bottom Row - 5 timezone cards */}
-        <div className="grid grid-cols-5 gap-4 min-h-0">
+        {/* Bottom Row - 5 timezone cards (40% minus half gap) */}
+        <div className="h-[calc(40%-0.5rem)] grid grid-cols-5 gap-4">
           {timezones.map((tz) => (
             <TimezoneCard key={tz.timezone} config={tz} />
           ))}
