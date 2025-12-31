@@ -22,7 +22,7 @@ export function OverviewPage() {
   return (
     <div className="h-full w-full page-padding flex flex-col overflow-hidden">
       {/* Bento Grid Container - fills available space with uniform gaps */}
-      <div className="flex-1 grid grid-rows-[2fr_1fr] gap-4 max-w-5xl mx-auto w-full min-h-0">
+      <div className="flex-1 grid grid-rows-[7fr_3fr] gap-4 max-w-5xl mx-auto w-full min-h-0">
         {/* Top Row - 3 equal width cards */}
         <div className="grid grid-cols-3 gap-4 min-h-0">
           <CalendarWidget />
