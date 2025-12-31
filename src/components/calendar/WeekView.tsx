@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
-import type { ProcessedEvent } from '../../config/calendar';
+import { CALENDAR_COLORS, type ProcessedEvent } from '../../config/calendar';
 import {
   getWeekDates,
   isSameDay,
@@ -125,6 +125,7 @@ export function WeekView({ currentDate, events }: WeekViewProps) {
                         event.startTime,
                         event.endTime
                       );
+                      const colorConfig = CALENDAR_COLORS[event.calendarColor];
                       return (
                         <Card
                           key={event.id}
@@ -139,8 +140,8 @@ export function WeekView({ currentDate, events }: WeekViewProps) {
                             }
                           }}
                         >
-                          <div className="p-1 h-full bg-primary/10 border-l-2 border-primary">
-                            <div className="text-xs font-semibold truncate text-foreground">
+                          <div className={`p-1 h-full ${colorConfig.bg} border-l-2 ${colorConfig.border}`}>
+                            <div className={`text-xs font-semibold truncate ${colorConfig.text}`}>
                               {event.title}
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -162,21 +163,24 @@ export function WeekView({ currentDate, events }: WeekViewProps) {
                   <div className="absolute top-0 left-1 right-1 space-y-1 pointer-events-auto">
                     {dayEvents
                       .filter((event) => event.isAllDay)
-                      .map((event) => (
-                        <Card
-                          key={event.id}
-                          className="p-1 text-xs bg-secondary/50 cursor-pointer hover:bg-secondary/70 transition-colors"
-                          onClick={() => {
-                            if (event.url) {
-                              window.open(event.url, '_blank');
-                            }
-                          }}
-                        >
-                          <div className="font-semibold truncate">
-                            {event.title}
-                          </div>
-                        </Card>
-                      ))}
+                      .map((event) => {
+                        const colorConfig = CALENDAR_COLORS[event.calendarColor];
+                        return (
+                          <Card
+                            key={event.id}
+                            className={`p-1 text-xs ${colorConfig.bg} cursor-pointer hover:shadow-md transition-all border-l-2 ${colorConfig.border}`}
+                            onClick={() => {
+                              if (event.url) {
+                                window.open(event.url, '_blank');
+                              }
+                            }}
+                          >
+                            <div className={`font-semibold truncate ${colorConfig.text}`}>
+                              {event.title}
+                            </div>
+                          </Card>
+                        );
+                      })}
                   </div>
                 )}
               </div>

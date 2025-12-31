@@ -3,13 +3,14 @@ import { Card } from '../ui/card';
 import { CalendarHeader, type ViewMode } from './CalendarHeader';
 import { WeekView } from './WeekView';
 import { MultiDayView } from './MultiDayView';
-import { useCalendarEvents } from '../../hooks/useCalendarEvents';
+import { useMultiCalendarEvents } from '../../hooks/useMultiCalendarEvents';
 import { getWeekStart, getWeekEnd, getStartOfDay, getEndOfDay } from '../../utils/calendar';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [enabledCalendarIds, setEnabledCalendarIds] = useState<string[]>([]);
 
   // Calculate date range based on view mode
   const { startDate, endDate } = useMemo(() => {
@@ -30,10 +31,18 @@ export function CalendarView() {
     }
   }, [currentDate, viewMode]);
 
-  const { events, loading, error } = useCalendarEvents({
+  const { events, loading, error, calendarSources } = useMultiCalendarEvents({
     startDate,
     endDate,
+    enabledCalendarIds: enabledCalendarIds.length > 0 ? enabledCalendarIds : undefined,
   });
+
+  // Initialize enabled calendars on first load
+  useMemo(() => {
+    if (enabledCalendarIds.length === 0 && calendarSources.length > 0) {
+      setEnabledCalendarIds(calendarSources.map((source) => source.id));
+    }
+  }, [calendarSources, enabledCalendarIds.length]);
 
   const handlePrevious = () => {
     const newDate = new Date(currentDate);
@@ -69,6 +78,18 @@ export function CalendarView() {
     setCurrentDate(new Date());
   };
 
+  const handleToggleCalendar = (calendarId: string) => {
+    setEnabledCalendarIds((prev) => {
+      if (prev.includes(calendarId)) {
+        // Remove calendar
+        return prev.filter((id) => id !== calendarId);
+      } else {
+        // Add calendar
+        return [...prev, calendarId];
+      }
+    });
+  };
+
   return (
     <div className="h-full w-full flex flex-col bg-background">
       <CalendarHeader
@@ -78,6 +99,9 @@ export function CalendarView() {
         onPrevious={handlePrevious}
         onNext={handleNext}
         onToday={handleToday}
+        calendarSources={calendarSources}
+        enabledCalendarIds={enabledCalendarIds}
+        onToggleCalendar={handleToggleCalendar}
       />
 
       <div className="flex-1 min-h-0">

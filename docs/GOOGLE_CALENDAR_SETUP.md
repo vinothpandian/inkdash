@@ -7,6 +7,9 @@ This guide explains how to set up the Google Calendar API integration for the in
 - **Week View**: Full 7-day week view with hourly time slots
 - **Multi-Day Views**: 3-day or 5-day views for focused planning
 - **Navigation**: Previous/Next week/period navigation with "Today" button
+- **Multiple Calendars**: Display multiple calendars with color coding and filtering
+- **Calendar Filters**: Toggle individual calendars on/off
+- **Color Coding**: Each calendar gets a unique color for easy identification
 - **Read-Only**: View your calendar events without modification
 - **Click Events**: Click on events to open them in Google Calendar
 
@@ -81,6 +84,50 @@ For the API key to work, your calendar must be publicly accessible:
 4. (Optional) You can still keep event details private
 
 **Alternative**: Use OAuth 2.0 instead of API key for private calendars (more complex setup).
+
+## Multiple Calendars Setup (Optional)
+
+You can display multiple calendars with color coding and individual filtering.
+
+### Configuration Format
+
+Add a `VITE_GOOGLE_CALENDARS` environment variable using this format:
+
+```env
+VITE_GOOGLE_CALENDARS=id1:name1:color1,id2:name2:color2,id3:name3:color3
+```
+
+**Available Colors**: `blue`, `purple`, `green`, `red`, `orange`, `pink`, `cyan`, `amber`
+
+### Example
+
+```env
+VITE_GOOGLE_CALENDAR_API_KEY=AIza...your_api_key_here
+VITE_GOOGLE_CALENDARS=personal@gmail.com:Personal:blue,work@company.com:Work:purple,family@group.calendar.google.com:Family:green
+```
+
+### Steps
+
+1. **Find Calendar IDs**: Repeat step 5 above for each calendar you want to add
+2. **Make All Calendars Public**: Each calendar must be publicly accessible (step 6)
+3. **Configure Format**: Add each calendar with format `id:displayName:color`
+4. **Separate with Commas**: Use commas (no spaces) to separate multiple calendars
+
+### Features
+
+When using multiple calendars:
+
+- **Color-Coded Events**: Each calendar's events appear in its assigned color
+- **Filter Button**: A "Calendars" button appears in the header
+- **Toggle Visibility**: Click checkboxes to show/hide specific calendars
+- **Quick Actions**: "Select All" and "Clear All" buttons for convenience
+- **Legend**: Filter dropdown shows each calendar with its color indicator
+
+### Note on Single vs Multiple
+
+- If `VITE_GOOGLE_CALENDARS` is set, it **overrides** `VITE_GOOGLE_CALENDAR_ID`
+- For single calendar setup, use only `VITE_GOOGLE_CALENDAR_ID` (simpler)
+- For multiple calendars, use `VITE_GOOGLE_CALENDARS` (more features)
 
 ## Usage
 

@@ -1,6 +1,8 @@
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '../ui/button';
+import { CalendarFilter } from './CalendarFilter';
 import { formatDateRange, getWeekStart, getWeekEnd } from '../../utils/calendar';
+import type { CalendarSource } from '../../config/calendar';
 
 export type ViewMode = 'week' | '3day' | '5day';
 
@@ -11,6 +13,9 @@ interface CalendarHeaderProps {
   onPrevious: () => void;
   onNext: () => void;
   onToday: () => void;
+  calendarSources?: CalendarSource[];
+  enabledCalendarIds?: string[];
+  onToggleCalendar?: (calendarId: string) => void;
 }
 
 export function CalendarHeader({
@@ -20,6 +25,9 @@ export function CalendarHeader({
   onPrevious,
   onNext,
   onToday,
+  calendarSources = [],
+  enabledCalendarIds = [],
+  onToggleCalendar,
 }: CalendarHeaderProps) {
   // Format date range based on view mode
   const getDateRangeText = () => {
@@ -71,29 +79,38 @@ export function CalendarHeader({
         </div>
       </div>
 
-      {/* Right: View mode selector */}
-      <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-        <Button
-          variant={viewMode === 'week' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => onViewModeChange('week')}
-        >
-          Week
-        </Button>
-        <Button
-          variant={viewMode === '5day' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => onViewModeChange('5day')}
-        >
-          5 Days
-        </Button>
-        <Button
-          variant={viewMode === '3day' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => onViewModeChange('3day')}
-        >
-          3 Days
-        </Button>
+      {/* Right: Calendar filter and view mode selector */}
+      <div className="flex items-center gap-3">
+        {onToggleCalendar && (
+          <CalendarFilter
+            calendarSources={calendarSources}
+            enabledCalendarIds={enabledCalendarIds}
+            onToggleCalendar={onToggleCalendar}
+          />
+        )}
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+          <Button
+            variant={viewMode === 'week' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onViewModeChange('week')}
+          >
+            Week
+          </Button>
+          <Button
+            variant={viewMode === '5day' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onViewModeChange('5day')}
+          >
+            5 Days
+          </Button>
+          <Button
+            variant={viewMode === '3day' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onViewModeChange('3day')}
+          >
+            3 Days
+          </Button>
+        </div>
       </div>
     </div>
   );
