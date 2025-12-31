@@ -23,15 +23,20 @@ struct ApiTask {
     id: String,
     title: Option<String>,
     content: Option<String>,
+    #[serde(default)]
     priority: i32,
+    #[serde(default)]
     status: i32,
     due_date: Option<String>,
     start_date: Option<String>,
     project_id: String,
     #[serde(default)]
     tags: Vec<String>,
-    created_time: String,
-    modified_time: String,
+    // These fields may not be present in all API responses
+    #[serde(default)]
+    created_time: Option<String>,
+    #[serde(default)]
+    modified_time: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -48,13 +53,16 @@ async fn fetch_projects(client: &Client, access_token: &str) -> Result<Vec<ApiPr
         .await
         .map_err(|e| format!("TickTick API request failed: {}", e))?;
 
-    if !response.status().is_success() {
-        return Err(format!("TickTick API error: {}", response.status()));
+    let status = response.status();
+    if !status.is_success() {
+        let body = response.text().await.unwrap_or_default();
+        log::error!("TickTick projects API error {}: {}", status, body);
+        return Err(format!("TickTick API error: {} - {}", status, body));
     }
 
-    response
-        .json()
-        .await
+    let body = response.text().await.map_err(|e| format!("Failed to read response: {}", e))?;
+
+    serde_json::from_str(&body)
         .map_err(|e| format!("Failed to parse TickTick projects: {}", e))
 }
 
@@ -112,24 +120,29 @@ pub async fn fetch_ticktick(access_token: &str) -> Result<TickTickData, String> 
     let mut all_tasks = Vec::new();
 
     for project in &projects {
-        if let Ok(project_data) = fetch_project_data(&client, access_token, &project.id).await {
-            for task in project_data.tasks {
-                // Filter out completed tasks (status 0 = not completed)
-                if task.status == 0 {
-                    all_tasks.push(TickTickTask {
-                        id: task.id,
-                        title: task.title.or(task.content).unwrap_or_else(|| "Untitled Task".to_string()),
-                        is_completed: false,
-                        priority: task.priority,
-                        due_date: task.due_date,
-                        start_date: task.start_date,
-                        project_id: task.project_id.clone(),
-                        project_name: project_map.get(&task.project_id).cloned(),
-                        tags: task.tags,
-                        created_time: task.created_time,
-                        modified_time: task.modified_time,
-                    });
+        match fetch_project_data(&client, access_token, &project.id).await {
+            Ok(project_data) => {
+                for task in project_data.tasks {
+                    // Filter out completed tasks (status 0 = not completed)
+                    if task.status == 0 {
+                        all_tasks.push(TickTickTask {
+                            id: task.id,
+                            title: task.title.or(task.content).unwrap_or_else(|| "Untitled Task".to_string()),
+                            is_completed: false,
+                            priority: task.priority,
+                            due_date: task.due_date,
+                            start_date: task.start_date,
+                            project_id: task.project_id.clone(),
+                            project_name: project_map.get(&task.project_id).cloned(),
+                            tags: task.tags,
+                            created_time: task.created_time.unwrap_or_default(),
+                            modified_time: task.modified_time.unwrap_or_default(),
+                        });
+                    }
                 }
+            }
+            Err(e) => {
+                log::warn!("TickTick: Failed to fetch project '{}': {}", project.name, e);
             }
         }
     }

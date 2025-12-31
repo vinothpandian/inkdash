@@ -1,5 +1,7 @@
 # inkdash Configuration
-# Copy this file to ~/.config/inkdash/config.toml and customize
+# Copy this file to the appropriate location and customize:
+#   macOS: ~/Library/Application Support/inkdash/config.toml
+#   Linux: ~/.config/inkdash/config.toml
 
 [weather]
 # Weather location coordinates (Toronto, Canada by default)

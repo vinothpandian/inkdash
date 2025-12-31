@@ -73,7 +73,11 @@ src-tauri/                    # Rust backend
 
 ## Configuration
 
-App configuration is stored in `~/.config/inkdash/config.toml`. See `config/config.example.toml` for the template.
+App configuration location:
+- **macOS:** `~/Library/Application Support/inkdash/config.toml`
+- **Linux:** `~/.config/inkdash/config.toml`
+
+See `config/config.example.toml` for the template.
 
 **Configured via config.toml:**
 - Weather location (latitude, longitude)
