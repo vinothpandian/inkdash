@@ -38,32 +38,33 @@ export function WeatherWidget() {
   const feelsLikeText = `${weather.feelsLike}°${weather.unit === 'celsius' ? 'C' : 'F'}`;
 
   return (
-    <Card className="h-full shadow-soft border-0 flex flex-col">
-      <CardContent className="flex-1 flex flex-col p-5">
+    <Card className="h-full">
+      <CardContent className="h-full flex flex-col p-4">
         {/* Condition */}
-        <div className="text-lg font-medium-labels text-foreground">
+        <div className="text-base font-medium-labels text-foreground text-center">
           {conditionText}
         </div>
 
         {/* Feels like */}
-        <div className="text-sm text-muted-foreground mt-1">
+        <div className="text-xs text-muted-foreground mt-0.5 text-center">
           Feels like {feelsLikeText}
         </div>
 
         {/* Hourly bar chart */}
-        <div className="flex-1 flex items-end gap-[2px] mt-4 mb-2">
+        <div className="flex-1 flex items-end gap-[1px] mt-3 mb-1.5 min-h-0">
           {weather.hourlyForecast.map((hourData) => {
             const isDay = hourData.hour >= sunriseHour && hourData.hour < sunsetHour;
             const heightPercent =
-              ((hourData.temperature - minTemp) / tempRange) * 60 + 20; // 20-80% range
+              ((hourData.temperature - minTemp) / tempRange) * 60 + 25; // 25-85% range
 
             return (
               <div
                 key={hourData.hour}
-                className={`flex-1 rounded-sm transition-colors ${
-                  isDay ? 'bg-foreground' : 'bg-muted-foreground/30'
-                }`}
-                style={{ height: `${heightPercent}%` }}
+                className="flex-1 rounded-sm transition-colors"
+                style={{
+                  height: `${heightPercent}%`,
+                  backgroundColor: isDay ? 'hsl(45 70% 65%)' : 'hsl(var(--muted-foreground) / 0.25)'
+                }}
                 title={`${hourData.hour}:00 - ${hourData.temperature}°${weather.unit === 'celsius' ? 'C' : 'F'}`}
               />
             );
@@ -71,13 +72,13 @@ export function WeatherWidget() {
         </div>
 
         {/* Sunrise/Sunset markers */}
-        <div className="flex justify-between text-xs text-muted-foreground mb-3">
+        <div className="flex justify-between text-[10px] text-muted-foreground mb-2">
           <span>{formatHour(sunriseDate)}</span>
           <span>{formatHour(sunsetDate)}</span>
         </div>
 
         {/* Location */}
-        <div className="text-sm text-center text-muted-foreground">
+        <div className="text-xs text-center text-muted-foreground">
           {weather.location.city}
         </div>
       </CardContent>

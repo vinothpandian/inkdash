@@ -15,7 +15,7 @@ export function CalendarWidget() {
   const monthName = today.toLocaleDateString('en-US', { month: 'long' });
 
   // Day abbreviations (Mon-Sun)
-  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   // Get first day of month and total days
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
@@ -45,19 +45,19 @@ export function CalendarWidget() {
   }
 
   return (
-    <Card className="h-full shadow-soft border-0 flex flex-col">
-      <CardContent className="flex-1 flex flex-col p-5">
+    <Card className="h-full">
+      <CardContent className="h-full flex flex-col p-4">
         {/* Month and Year */}
-        <div className="text-lg font-medium-labels mb-4">
-          {monthName} {currentYear}
+        <div className="text-base font-medium-labels mb-3">
+          {monthName} <span className="text-muted-foreground font-normal">{currentYear}</span>
         </div>
 
         {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {dayNames.map((day) => (
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
+          {dayNames.map((day, i) => (
             <div
-              key={day}
-              className="text-center text-xs text-muted-foreground font-medium"
+              key={i}
+              className="text-center text-[10px] text-muted-foreground font-medium py-1"
             >
               {day}
             </div>
@@ -65,13 +65,13 @@ export function CalendarWidget() {
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1 flex-1">
+        <div className="grid grid-cols-7 gap-0.5 flex-1 content-start">
           {calendarDays.map((day, index) => (
             <div
               key={index}
               className={`
-                flex items-center justify-center text-sm
-                ${day === null ? '' : 'cursor-default'}
+                flex items-center justify-center text-xs aspect-square
+                ${day === null ? '' : ''}
                 ${
                   day === currentDate
                     ? 'bg-foreground text-background rounded-full font-medium'

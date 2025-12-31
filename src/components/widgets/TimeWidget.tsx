@@ -36,20 +36,20 @@ export function TimeWidget() {
   });
 
   return (
-    <Card className="h-full shadow-soft border-0 flex flex-col">
-      <CardContent className="flex-1 flex flex-col items-center justify-center p-5">
+    <Card className="h-full">
+      <CardContent className="h-full flex flex-col items-center justify-center p-4">
         {/* Large time display */}
-        <div className="text-6xl font-light-numbers tracking-tight text-foreground">
+        <div className="text-4xl sm:text-5xl font-light-numbers text-foreground">
           {timeString}
         </div>
 
         {/* Date */}
-        <div className="text-xl font-light text-foreground mt-3">
+        <div className="text-lg font-light text-foreground mt-2">
           {dateString}
         </div>
 
         {/* Day of week */}
-        <div className="text-lg text-muted-foreground mt-1">
+        <div className="text-sm text-muted-foreground mt-0.5">
           {dayOfWeek}
         </div>
       </CardContent>

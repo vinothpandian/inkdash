@@ -18,8 +18,8 @@ function Sparkline({
 }) {
   if (!data || data.length < 2) return null;
 
-  const width = 80;
-  const height = 32;
+  const width = 70;
+  const height = 28;
   const padding = 2;
 
   // Calculate min/max for scaling
@@ -74,15 +74,15 @@ export function StockCard({ stock }: StockCardProps) {
   const priceText = `${stock.currency}${stock.price.toFixed(2)}`;
 
   return (
-    <Card className="h-full shadow-soft border-0">
-      <CardContent className="h-full flex flex-col justify-between p-5">
+    <Card className="h-full">
+      <CardContent className="h-full flex flex-col justify-between p-4">
         {/* Top row: Ticker and Change */}
         <div className="flex justify-between items-start">
-          <div className="text-lg font-semibold text-foreground">
+          <div className="text-base font-semibold text-foreground">
             {stock.ticker}
           </div>
           <div
-            className={`text-sm font-medium-labels ${
+            className={`text-xs font-medium-labels ${
               isPositive ? 'text-foreground' : 'text-muted-foreground'
             }`}
           >
@@ -91,13 +91,13 @@ export function StockCard({ stock }: StockCardProps) {
         </div>
 
         {/* Company name */}
-        <div className="text-sm text-muted-foreground -mt-1">
+        <div className="text-xs text-muted-foreground -mt-1 truncate">
           {stock.name}
         </div>
 
         {/* Bottom row: Price and Sparkline */}
-        <div className="flex justify-between items-end mt-auto pt-3">
-          <div className="text-xl font-light-numbers text-foreground">
+        <div className="flex justify-between items-end mt-auto pt-2">
+          <div className="text-lg font-light-numbers text-foreground">
             {priceText}
           </div>
           <Sparkline data={stock.sparklineData} isPositive={isPositive} />

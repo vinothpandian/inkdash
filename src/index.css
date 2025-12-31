@@ -1,126 +1,121 @@
+/* Import DM Sans for refined, geometric typography */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
 @import "tailwindcss";
 
 /*
  * inkdash Theme Configuration
- * TRMNL e-ink inspired aesthetic - clean, minimal, soft shadows
+ * Matte design aesthetic - warm neutrals, paper-like texture, refined minimalism
  */
 
 @theme inline {
-  /* Border radius - generous 20px for soft, rounded cards */
+  /* Border radius - generous for soft, rounded cards */
   --radius-sm: calc(var(--radius) - 0.25rem);
   --radius-md: calc(var(--radius) - 0.125rem);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 0.25rem);
 
-  /* Custom shadow - soft, diffused */
-  --shadow-soft: 0 2px 20px rgba(0, 0, 0, 0.06);
+  /* Custom shadow - soft, diffused, matte */
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.02);
+  --shadow-dock: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
 
-  /* Typography - System UI stack */
-  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  /* Typography - DM Sans for refined, geometric feel */
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 /*
  * CSS Variables for theming
  * Using class strategy for dark mode (toggle .dark on html element)
+ * Matte aesthetic with warm neutral palette
  */
 :root {
   /* Base radius */
-  --radius: 1.25rem;
+  --radius: 1rem;
 
-  /* Light theme colors */
-  --background: 0 0% 96%;
-  --foreground: 0 0% 10%;
+  /* Light theme colors - warm matte palette */
+  --background: 40 20% 97%;
+  --foreground: 30 8% 18%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 10%;
+  --card: 40 25% 99%;
+  --card-foreground: 30 8% 18%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 10%;
+  --popover: 40 25% 99%;
+  --popover-foreground: 30 8% 18%;
 
-  --primary: 0 0% 15%;
-  --primary-foreground: 0 0% 98%;
+  --primary: 30 8% 22%;
+  --primary-foreground: 40 20% 97%;
 
-  --secondary: 0 0% 90%;
-  --secondary-foreground: 0 0% 15%;
+  --secondary: 35 12% 92%;
+  --secondary-foreground: 30 8% 22%;
 
-  --muted: 0 0% 90%;
-  --muted-foreground: 0 0% 45%;
+  --muted: 35 12% 93%;
+  --muted-foreground: 30 6% 50%;
 
-  --accent: 0 0% 90%;
-  --accent-foreground: 0 0% 15%;
+  --accent: 35 15% 90%;
+  --accent-foreground: 30 8% 22%;
 
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: 0 65% 55%;
+  --destructive-foreground: 40 20% 97%;
 
-  --border: 0 0% 88%;
-  --input: 0 0% 88%;
-  --ring: 0 0% 15%;
+  --border: 35 15% 90%;
+  --input: 35 15% 88%;
+  --ring: 30 8% 22%;
 
-  /* Chart colors - neutral grayscale for e-ink aesthetic */
-  --chart-1: 0 0% 20%;
-  --chart-2: 0 0% 35%;
-  --chart-3: 0 0% 50%;
-  --chart-4: 0 0% 65%;
-  --chart-5: 0 0% 80%;
+  /* Chart colors - warm matte grays */
+  --chart-1: 30 8% 25%;
+  --chart-2: 30 6% 38%;
+  --chart-3: 30 5% 52%;
+  --chart-4: 30 4% 66%;
+  --chart-5: 30 4% 80%;
 
-  /* Sidebar */
-  --sidebar: 0 0% 98%;
-  --sidebar-foreground: 0 0% 10%;
-  --sidebar-primary: 0 0% 15%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 0 0% 90%;
-  --sidebar-accent-foreground: 0 0% 15%;
-  --sidebar-border: 0 0% 88%;
-  --sidebar-ring: 0 0% 15%;
+  /* Dock colors */
+  --dock-bg: 40 20% 99%;
+  --dock-active: 30 8% 18%;
+  --dock-inactive: 30 6% 70%;
 }
 
 .dark {
-  /* Dark theme colors */
-  --background: 0 0% 10%;
-  --foreground: 0 0% 96%;
+  /* Dark theme colors - warm matte dark palette */
+  --background: 30 8% 8%;
+  --foreground: 35 12% 92%;
 
-  --card: 0 0% 16%;
-  --card-foreground: 0 0% 96%;
+  --card: 30 8% 12%;
+  --card-foreground: 35 12% 92%;
 
-  --popover: 0 0% 16%;
-  --popover-foreground: 0 0% 96%;
+  --popover: 30 8% 12%;
+  --popover-foreground: 35 12% 92%;
 
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 10%;
+  --primary: 35 12% 92%;
+  --primary-foreground: 30 8% 10%;
 
-  --secondary: 0 0% 20%;
-  --secondary-foreground: 0 0% 96%;
+  --secondary: 30 6% 18%;
+  --secondary-foreground: 35 12% 92%;
 
-  --muted: 0 0% 20%;
-  --muted-foreground: 0 0% 60%;
+  --muted: 30 6% 18%;
+  --muted-foreground: 30 6% 55%;
 
-  --accent: 0 0% 20%;
-  --accent-foreground: 0 0% 96%;
+  --accent: 30 6% 18%;
+  --accent-foreground: 35 12% 92%;
 
-  --destructive: 0 62% 50%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: 0 55% 48%;
+  --destructive-foreground: 35 12% 92%;
 
-  --border: 0 0% 22%;
-  --input: 0 0% 22%;
-  --ring: 0 0% 85%;
+  --border: 30 6% 18%;
+  --input: 30 6% 20%;
+  --ring: 35 12% 85%;
 
-  /* Chart colors - dark mode */
-  --chart-1: 0 0% 85%;
-  --chart-2: 0 0% 70%;
-  --chart-3: 0 0% 55%;
-  --chart-4: 0 0% 40%;
-  --chart-5: 0 0% 25%;
+  /* Chart colors - dark mode warm grays */
+  --chart-1: 35 10% 85%;
+  --chart-2: 35 8% 72%;
+  --chart-3: 35 6% 55%;
+  --chart-4: 30 5% 38%;
+  --chart-5: 30 4% 22%;
 
-  /* Sidebar - dark */
-  --sidebar: 0 0% 12%;
-  --sidebar-foreground: 0 0% 96%;
-  --sidebar-primary: 0 0% 98%;
-  --sidebar-primary-foreground: 0 0% 10%;
-  --sidebar-accent: 0 0% 20%;
-  --sidebar-accent-foreground: 0 0% 96%;
-  --sidebar-border: 0 0% 22%;
-  --sidebar-ring: 0 0% 85%;
+  /* Dock colors - dark */
+  --dock-bg: 30 8% 14%;
+  --dock-active: 35 12% 92%;
+  --dock-inactive: 30 6% 45%;
 }
 
 /*
@@ -131,6 +126,11 @@
     @apply border-border;
   }
 
+  html {
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior: none;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
@@ -138,15 +138,25 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Subtle paper-like texture overlay */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-blend-mode: overlay;
+    background-size: 150px;
+  }
+
+  .dark body {
+    background-blend-mode: soft-light;
   }
 
   /* Typography weight utilities for dashboard numbers */
   .font-light-numbers {
     font-weight: 300;
+    letter-spacing: -0.02em;
   }
 
   .font-medium-labels {
     font-weight: 500;
+    letter-spacing: 0.01em;
   }
 }
 
@@ -188,12 +198,79 @@
   --color-chart-4: hsl(var(--chart-4));
   --color-chart-5: hsl(var(--chart-5));
 
-  --color-sidebar: hsl(var(--sidebar));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-dock-bg: hsl(var(--dock-bg));
+  --color-dock-active: hsl(var(--dock-active));
+  --color-dock-inactive: hsl(var(--dock-inactive));
+}
+
+/*
+ * Custom component styles
+ */
+@layer components {
+  /* Matte card style */
+  .matte-card {
+    @apply bg-card rounded-lg;
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Floating dock */
+  .floating-dock {
+    @apply bg-dock-bg rounded-full;
+    box-shadow: var(--shadow-dock);
+  }
+
+  /* Iframe container with rounded corners */
+  .iframe-container {
+    @apply bg-card rounded-lg overflow-hidden;
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Page padding for consistent layout */
+  .page-padding {
+    @apply p-4 sm:p-5 md:p-6;
+  }
+}
+
+/*
+ * Animation utilities
+ */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 }

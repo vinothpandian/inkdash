@@ -2,7 +2,7 @@ import { StockCard } from '@/components/widgets';
 import { mockStockData } from '@/config/stocks';
 
 /**
- * StocksPage - Stock tracking dashboard with 2x2 grid layout
+ * StocksPage - Stock tracking dashboard with responsive 2x2 grid layout
  *
  * Layout:
  * ┌─────────────────────────────────────────────────────────────────┐
@@ -20,12 +20,14 @@ import { mockStockData } from '@/config/stocks';
  */
 export function StocksPage() {
   return (
-    <div className="h-full w-full p-6 flex items-center justify-center">
-      {/* 2x2 Grid Container */}
-      <div className="grid grid-cols-2 gap-5 max-w-2xl w-full aspect-[4/3]">
-        {mockStockData.map((stock) => (
-          <StockCard key={stock.ticker} stock={stock} />
-        ))}
+    <div className="h-full w-full page-padding flex flex-col overflow-hidden">
+      {/* Centered 2x2 Grid Container */}
+      <div className="flex-1 flex items-center justify-center min-h-0">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl h-full max-h-[500px]">
+          {mockStockData.map((stock) => (
+            <StockCard key={stock.ticker} stock={stock} />
+          ))}
+        </div>
       </div>
     </div>
   );

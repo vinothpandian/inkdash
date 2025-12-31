@@ -2,9 +2,9 @@ import { CalendarWidget, TimeWidget, WeatherWidget, TimezoneCard } from '@/compo
 import { timezones } from '@/config/timezones';
 
 /**
- * OverviewPage - Main dashboard with bento-style grid layout
+ * OverviewPage - Main dashboard with responsive bento-style grid layout
  *
- * Layout:
+ * Desktop (landscape tablet):
  * ┌─────────────────────────────────────────────────────────────────┐
  * │  ┌─────────────────┐  ┌───────────────────┐  ┌───────────────┐  │
  * │  │    Calendar     │  │      Time         │  │    Weather    │  │
@@ -14,21 +14,24 @@ import { timezones } from '@/config/timezones';
  * │  │   TZ1   │ │   TZ2   │ │   TZ3   │ │   TZ4   │ │    TZ5    │  │
  * │  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └───────────┘  │
  * └─────────────────────────────────────────────────────────────────┘
+ *
+ * Mobile/Portrait:
+ * Time widget spans full width, other widgets stack in 2-column grid
  */
 export function OverviewPage() {
   return (
-    <div className="h-full w-full p-6 flex flex-col">
-      {/* Bento Grid Container */}
-      <div className="flex-1 flex flex-col gap-5 max-w-5xl mx-auto w-full">
+    <div className="h-full w-full page-padding flex flex-col overflow-hidden">
+      {/* Bento Grid Container - fills available space with uniform gaps */}
+      <div className="flex-1 grid grid-rows-[2fr_1fr] gap-4 max-w-5xl mx-auto w-full min-h-0">
         {/* Top Row - 3 equal width cards */}
-        <div className="grid grid-cols-3 gap-5 flex-[2]">
+        <div className="grid grid-cols-3 gap-4 min-h-0">
           <CalendarWidget />
           <TimeWidget />
           <WeatherWidget />
         </div>
 
         {/* Bottom Row - 5 timezone cards */}
-        <div className="grid grid-cols-5 gap-5 flex-1">
+        <div className="grid grid-cols-5 gap-4 min-h-0">
           {timezones.map((tz) => (
             <TimezoneCard key={tz.timezone} config={tz} />
           ))}
