@@ -73,6 +73,10 @@
   --dock-bg: 40 20% 99%;
   --dock-active: 30 8% 18%;
   --dock-inactive: 30 6% 70%;
+
+  /* Accent colors - subtle warm amber */
+  --accent-warm: 38 70% 60%;
+  --accent-warm-muted: 38 40% 75%;
 }
 
 .dark {
@@ -116,6 +120,10 @@
   --dock-bg: 30 8% 14%;
   --dock-active: 35 12% 92%;
   --dock-inactive: 30 6% 45%;
+
+  /* Accent colors - subtle warm amber (dark mode) */
+  --accent-warm: 38 65% 55%;
+  --accent-warm-muted: 38 30% 40%;
 }
 
 /*
@@ -201,6 +209,9 @@
   --color-dock-bg: hsl(var(--dock-bg));
   --color-dock-active: hsl(var(--dock-active));
   --color-dock-inactive: hsl(var(--dock-inactive));
+
+  --color-accent-warm: hsl(var(--accent-warm));
+  --color-accent-warm-muted: hsl(var(--accent-warm-muted));
 }
 
 /*

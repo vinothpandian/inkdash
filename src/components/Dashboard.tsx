@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Sun, Moon } from 'lucide-react';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useTheme } from '@/hooks/useTheme';
 import { OverviewPage } from '@/components/pages/OverviewPage';
@@ -17,8 +18,8 @@ const DOCK_HIDE_DELAY = 2000; // 2 seconds after leaving hover zone
 const HOVER_ZONE_HEIGHT = 50; // Bottom 50px triggers dock
 
 export function Dashboard() {
-  // Initialize auto theme switching (light mode 7am-7pm, dark mode 7pm-7am)
-  useTheme();
+  // Theme management with toggle support
+  const { isDark, toggleTheme } = useTheme();
 
   const { currentPage, isSwiping, swipeOffset, handlers, goToPage, totalPages } = useSwipe({
     totalPages: PAGES.length,
@@ -164,6 +165,24 @@ export function Dashboard() {
         onMouseLeave={handleDockLeave}
       >
         <div className="floating-dock flex items-center gap-1 px-2 py-2">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-accent-warm/20 transition-colors duration-200"
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={isDark ? 'Light mode' : 'Dark mode'}
+          >
+            {isDark ? (
+              <Sun className="w-4 h-4 text-accent-warm" />
+            ) : (
+              <Moon className="w-4 h-4 text-dock-inactive hover:text-dock-active transition-colors" />
+            )}
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-5 bg-border mx-1" />
+
+          {/* Page Navigation */}
           {PAGES.map((page, index) => {
             const isActive = index === currentPage;
             return (
@@ -182,7 +201,7 @@ export function Dashboard() {
               >
                 {/* Dot or expanded state */}
                 {isActive ? (
-                  <span className="text-sm font-medium-labels text-dock-active whitespace-nowrap">
+                  <span className="text-sm font-medium-labels text-accent-warm whitespace-nowrap">
                     {page.label}
                   </span>
                 ) : (
@@ -195,9 +214,6 @@ export function Dashboard() {
           })}
         </div>
       </div>
-
-      {/* Invisible hover zone indicator (for debugging - can be removed) */}
-      {/* <div className="fixed bottom-0 left-0 right-0 h-[50px] bg-red-500/10 pointer-events-none z-10" /> */}
     </div>
   );
 }
