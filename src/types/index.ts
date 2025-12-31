@@ -117,3 +117,55 @@ export interface DashboardConfig {
   /** Weather location configuration */
   weatherLocation: WeatherLocation
 }
+
+// ============================================================================
+// TickTick Task Types
+// ============================================================================
+
+export type TaskPriority = 'none' | 'low' | 'medium' | 'high'
+export type TaskFilter = 'today' | 'week' | 'backlog'
+
+export interface TickTickTask {
+  /** Unique task ID */
+  id: string
+  /** Task title/content */
+  title: string
+  /** Task completion status */
+  isCompleted: boolean
+  /** Task priority (0=none, 1=low, 3=medium, 5=high) */
+  priority: number
+  /** Due date (ISO string) */
+  dueDate?: string
+  /** Start date (ISO string) */
+  startDate?: string
+  /** Project/list ID */
+  projectId: string
+  /** Project/list name */
+  projectName?: string
+  /** Task tags */
+  tags?: string[]
+  /** Created date (ISO string) */
+  createdTime: string
+  /** Modified date (ISO string) */
+  modifiedTime: string
+}
+
+export interface TickTickProject {
+  /** Unique project ID */
+  id: string
+  /** Project name */
+  name: string
+  /** Project color */
+  color?: string
+  /** Sort order */
+  sortOrder: number
+}
+
+export interface TickTickData {
+  /** List of tasks */
+  tasks: TickTickTask[]
+  /** List of projects/lists */
+  projects: TickTickProject[]
+  /** Timestamp of last update */
+  lastUpdated: Date
+}
