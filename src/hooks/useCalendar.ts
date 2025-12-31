@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import type { CalendarEvent } from '@/types'
+import type { CalendarEvent, CalendarSource } from '@/types'
 
 interface UseCalendarReturn {
   events: CalendarEvent[]
+  calendarSources: CalendarSource[]
   isLoading: boolean
   error: string | null
   isConfigured: boolean
@@ -17,10 +18,12 @@ const REFRESH_INTERVAL = 5 * 60 * 1000 // 5 minutes
  * Hook for fetching and managing Google Calendar events
  * - Fetches from Google Calendar API via Tauri backend
  * - Handles OAuth flow for authentication
+ * - Supports multiple calendars with filtering
  * - Auto-refreshes every 5 minutes
  */
 export function useCalendar(): UseCalendarReturn {
   const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [calendarSources, setCalendarSources] = useState<CalendarSource[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isConfigured, setIsConfigured] = useState(false)
@@ -40,12 +43,18 @@ export function useCalendar(): UseCalendarReturn {
     const configured = await checkConfiguration()
     if (!configured) {
       setEvents([])
+      setCalendarSources([])
       setError(null)
       return
     }
 
     try {
-      const calendarEvents = await invoke<CalendarEvent[]>('fetch_calendar_events')
+      // Fetch calendar sources and events in parallel
+      const [sources, calendarEvents] = await Promise.all([
+        invoke<CalendarSource[]>('get_calendar_sources'),
+        invoke<CalendarEvent[]>('fetch_calendar_events'),
+      ])
+      setCalendarSources(sources)
       setEvents(calendarEvents)
       setError(null)
     } catch (err) {
@@ -84,6 +93,7 @@ export function useCalendar(): UseCalendarReturn {
 
   return {
     events,
+    calendarSources,
     isLoading,
     error,
     isConfigured,

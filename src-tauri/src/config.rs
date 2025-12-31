@@ -43,6 +43,13 @@ pub struct TickTickConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CalendarSource {
+    pub id: String,
+    pub name: String,
+    pub color: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GoogleCalendarConfig {
     pub client_id: String,
     pub client_secret: String,
@@ -52,6 +59,8 @@ pub struct GoogleCalendarConfig {
     pub refresh_token: String,
     #[serde(default)]
     pub token_expiry: String,
+    #[serde(default)]
+    pub calendars: Vec<CalendarSource>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,6 +105,7 @@ impl Default for AppConfig {
                 access_token: String::new(),
                 refresh_token: String::new(),
                 token_expiry: String::new(),
+                calendars: vec![],
             },
             timezones: TimezonesConfig {
                 zones: vec![

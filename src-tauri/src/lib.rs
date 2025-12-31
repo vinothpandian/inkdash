@@ -2,8 +2,8 @@ mod api;
 mod config;
 mod oauth;
 
-use api::{CalendarEvent, StockData, TickTickData, WeatherData};
-use config::AppConfig;
+use api::{CalendarEvent, CalendarListEntry, StockData, TickTickData, WeatherData};
+use config::{AppConfig, CalendarSource};
 use tauri::{Manager, WebviewWindow};
 
 // Tauri Commands
@@ -39,6 +39,16 @@ async fn fetch_ticktick_tasks() -> Result<TickTickData, String> {
 #[tauri::command]
 async fn fetch_calendar_events() -> Result<Vec<CalendarEvent>, String> {
     api::calendar::fetch_calendar_events().await
+}
+
+#[tauri::command]
+async fn fetch_calendar_list() -> Result<Vec<CalendarListEntry>, String> {
+    api::calendar::fetch_calendar_list().await
+}
+
+#[tauri::command]
+async fn get_calendar_sources() -> Result<Vec<CalendarSource>, String> {
+    api::calendar::get_calendar_sources().await
 }
 
 #[tauri::command]
@@ -125,6 +135,8 @@ pub fn run() {
             fetch_stocks,
             fetch_ticktick_tasks,
             fetch_calendar_events,
+            fetch_calendar_list,
+            get_calendar_sources,
             is_calendar_configured,
             start_google_oauth,
             complete_google_oauth,

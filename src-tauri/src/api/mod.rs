@@ -94,6 +94,9 @@ pub struct CalendarEvent {
     pub end: EventDateTime,
     pub location: Option<String>,
     pub html_link: Option<String>,
+    pub calendar_id: String,
+    pub calendar_name: String,
+    pub calendar_color: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -102,4 +105,13 @@ pub struct EventDateTime {
     pub date_time: Option<String>,
     pub date: Option<String>,
     pub time_zone: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarListEntry {
+    pub id: String,
+    pub summary: String,
+    pub background_color: Option<String>,
+    pub primary: bool,
 }

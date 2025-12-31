@@ -196,4 +196,19 @@ export interface CalendarEvent {
   location?: string
   /** Link to event in Google Calendar */
   htmlLink?: string
+  /** Calendar ID this event belongs to */
+  calendarId: string
+  /** Calendar display name */
+  calendarName: string
+  /** Calendar color */
+  calendarColor: string
+}
+
+export interface CalendarSource {
+  /** Calendar ID */
+  id: string
+  /** Display name */
+  name: string
+  /** Color for visual distinction */
+  color: string
 }
