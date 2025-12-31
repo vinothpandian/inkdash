@@ -1,6 +1,11 @@
 import { useMemo } from 'react'
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card'
 import { CALENDAR_COLORS, type ProcessedEvent } from '@/config/calendar'
-import { getWeekDates, isSameDay, getHoursArray } from '@/utils/calendar'
+import { getWeekDates, isSameDay, getHoursArray, formatTime } from '@/utils/calendar'
 
 interface WeekViewProps {
   currentDate: Date
@@ -156,27 +161,66 @@ export function WeekView({ currentDate, events }: WeekViewProps) {
                     const position = calculateVariableEventPosition(event.startTime, event.endTime)
                     const colorConfig = CALENDAR_COLORS[event.calendarColor]
                     return (
-                      <div
-                        key={event.id}
-                        className={`absolute left-0.5 right-0.5 pointer-events-auto cursor-pointer hover:brightness-95 transition-all overflow-hidden rounded-sm ${colorConfig.bg} border-l-2 ${colorConfig.border}`}
-                        style={{
-                          top: `${position.top}%`,
-                          height: `${Math.max(position.height, 2)}%`,
-                        }}
-                        onClick={() => {
-                          if (event.url) {
-                            window.open(event.url, '_blank')
-                          }
-                        }}
-                      >
-                        <div className="px-0.5 h-full">
+                      <HoverCard key={event.id} openDelay={200} closeDelay={100}>
+                        <HoverCardTrigger asChild>
                           <div
-                            className={`text-[9px] font-medium truncate leading-tight ${colorConfig.text}`}
+                            className={`absolute left-0.5 right-0.5 pointer-events-auto cursor-pointer transition-all overflow-hidden rounded-sm ${colorConfig.bg} border-l-2 ${colorConfig.border} hover:z-10 hover:shadow-md`}
+                            style={{
+                              top: `${position.top}%`,
+                              height: `${Math.max(position.height, 2)}%`,
+                            }}
+                            onClick={() => {
+                              if (event.url) {
+                                window.open(event.url, '_blank')
+                              }
+                            }}
                           >
-                            {event.title}
+                            <div className="px-0.5 h-full">
+                              <div
+                                className={`text-[9px] font-medium truncate leading-tight ${colorConfig.text}`}
+                              >
+                                {event.title}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        </HoverCardTrigger>
+                        <HoverCardContent
+                          className="w-64 p-3"
+                          side="right"
+                          align="start"
+                          sideOffset={5}
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-start gap-2">
+                              <div
+                                className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0`}
+                                style={{ backgroundColor: colorConfig.hex }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-semibold leading-tight">
+                                  {event.title}
+                                </h4>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {event.calendarName}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatTime(event.startTime)} - {formatTime(event.endTime)}
+                            </div>
+                            {event.location && (
+                              <div className="text-xs text-muted-foreground truncate">
+                                {event.location}
+                              </div>
+                            )}
+                            {event.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {event.description}
+                              </p>
+                            )}
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
                     )
                   })}
               </div>
