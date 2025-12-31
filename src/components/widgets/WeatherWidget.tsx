@@ -1,3 +1,4 @@
+import { BarChart, Bar, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent } from '@/components/ui/card';
 import { useWeather } from '@/hooks/useWeather';
 
@@ -15,8 +16,8 @@ export function WeatherWidget() {
         <CardContent className="h-full flex flex-col p-4 animate-pulse">
           <div className="h-5 bg-muted rounded w-24 mx-auto" />
           <div className="h-3 bg-muted rounded w-20 mx-auto mt-2" />
-          <div className="flex-1 flex items-end gap-[1px] mt-3 mb-1.5">
-            {Array.from({ length: 24 }).map((_, i) => (
+          <div className="flex-1 flex items-end gap-1 mt-3 mb-1.5">
+            {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="flex-1 bg-muted rounded-sm" style={{ height: '50%' }} />
             ))}
           </div>
@@ -45,19 +46,24 @@ export function WeatherWidget() {
   const sunriseHour = sunriseDate.getHours();
   const sunsetHour = sunsetDate.getHours();
 
-  // Format sunrise/sunset for display
-  const formatHour = (date: Date) => {
-    const hour = date.getHours();
+  // Format hour to 12h format
+  const formatHour = (hour: number) => {
     const ampm = hour >= 12 ? 'pm' : 'am';
     const displayHour = hour % 12 || 12;
     return `${displayHour}${ampm}`;
   };
 
-  // Get min/max temperatures for scaling
-  const temps = weather.hourlyForecast.map((h) => h.temperature);
-  const minTemp = Math.min(...temps);
-  const maxTemp = Math.max(...temps);
-  const tempRange = maxTemp - minTemp || 1;
+  // Prepare chart data - every 2 hours
+  // Use absolute temperature for bar height so negative temps still render upward
+  const chartData = weather.hourlyForecast
+    .filter((_, index) => index % 2 === 0)
+    .map((hourData) => ({
+      hour: hourData.hour,
+      label: formatHour(hourData.hour),
+      temperature: hourData.temperature,
+      absTemperature: Math.abs(hourData.temperature),
+      isDay: hourData.hour >= sunriseHour && hourData.hour < sunsetHour,
+    }));
 
   // Condition display text (capitalize each word, replace hyphens with spaces)
   const conditionText = weather.condition
@@ -66,7 +72,8 @@ export function WeatherWidget() {
     .join(' ');
 
   // Feels like temperature with unit and degree symbol
-  const feelsLikeText = `${weather.feelsLike}°${weather.unit === 'celsius' ? 'C' : 'F'}`;
+  const unit = weather.unit === 'celsius' ? 'C' : 'F';
+  const feelsLikeText = `${weather.feelsLike}°${unit}`;
 
   return (
     <Card className="h-full">
@@ -82,30 +89,38 @@ export function WeatherWidget() {
         </div>
 
         {/* Hourly bar chart */}
-        <div className="flex-1 flex items-end gap-[1px] mt-3 mb-1.5 min-h-0">
-          {weather.hourlyForecast.map((hourData) => {
-            const isDay = hourData.hour >= sunriseHour && hourData.hour < sunsetHour;
-            const heightPercent =
-              ((hourData.temperature - minTemp) / tempRange) * 60 + 25; // 25-85% range
-
-            return (
-              <div
-                key={hourData.hour}
-                className="flex-1 rounded-sm transition-colors"
-                style={{
-                  height: `${heightPercent}%`,
-                  backgroundColor: isDay ? 'hsl(45 70% 65%)' : 'hsl(var(--muted-foreground) / 0.25)'
+        <div className="flex-1 mt-2 mb-1 min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
+              <Tooltip
+                cursor={false}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const data = payload[0].payload;
+                  return (
+                    <div className="bg-popover border border-border rounded-md px-2 py-1 text-xs shadow-md">
+                      <span className="text-muted-foreground">{data.label}</span>
+                      <span className="ml-2 font-medium">{data.temperature}°{unit}</span>
+                    </div>
+                  );
                 }}
-                title={`${hourData.hour}:00 - ${hourData.temperature}°${weather.unit === 'celsius' ? 'C' : 'F'}`}
               />
-            );
-          })}
+              <Bar dataKey="absTemperature" radius={[4, 4, 0, 0]}>
+                {chartData.map((entry) => (
+                  <Cell
+                    key={entry.hour}
+                    fill={entry.isDay ? 'hsl(45 70% 65%)' : 'hsl(var(--muted-foreground) / 0.25)'}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
-        {/* Sunrise/Sunset markers */}
+        {/* Sunrise/Sunset times */}
         <div className="flex justify-between text-[10px] text-muted-foreground mb-2">
-          <span>{formatHour(sunriseDate)}</span>
-          <span>{formatHour(sunsetDate)}</span>
+          <span>Sunrise {formatHour(sunriseHour)}</span>
+          <span>Sunset {formatHour(sunsetHour)}</span>
         </div>
 
         {/* Location */}
