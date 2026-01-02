@@ -74,10 +74,26 @@ pub struct TimezonesConfig {
     pub zones: Vec<TimezoneEntry>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum ThemeMode {
+    /// Light mode always
+    Light,
+    /// Dark mode always
+    Dark,
+    /// Auto switch based on fixed time (7am/7pm)
+    #[default]
+    AutoTime,
+    /// Auto switch based on sunrise/sunset from weather data
+    AutoSun,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DisplayConfig {
     #[serde(default)]
     pub fullscreen: bool,
+    #[serde(default)]
+    pub theme_mode: ThemeMode,
 }
 
 impl Default for AppConfig {
@@ -131,7 +147,10 @@ impl Default for AppConfig {
                     },
                 ],
             },
-            display: DisplayConfig { fullscreen: false },
+            display: DisplayConfig {
+                fullscreen: false,
+                theme_mode: ThemeMode::AutoSun,
+            },
         }
     }
 }

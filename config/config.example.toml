@@ -44,3 +44,5 @@ zones = [
 [display]
 # Start in fullscreen mode (toggle with F11)
 fullscreen = false
+# Theme mode: "light", "dark", "auto_time" (7am/7pm), or "auto_sun" (sunrise/sunset)
+theme_mode = "auto_sun"

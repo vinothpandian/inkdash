@@ -1,11 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { Sun, Moon } from 'lucide-react';
 import { useSwipe } from '@/hooks/useSwipe';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme, type ThemeMode } from '@/hooks/useTheme';
+import { useWeather } from '@/hooks/useWeather';
 import { OverviewPage } from '@/components/pages/OverviewPage';
 import { TasksPage } from '@/components/pages/TasksPage';
 import { CalendarPage } from '@/components/pages/CalendarPage';
 import { StocksPage } from '@/components/pages/StocksPage';
+
+interface DisplayConfig {
+  fullscreen: boolean;
+  theme_mode: ThemeMode;
+}
+
+interface AppConfig {
+  display: DisplayConfig;
+}
 
 const PAGES = [
   { id: 'overview', label: 'Home', component: OverviewPage },
@@ -18,8 +29,26 @@ const DOCK_HIDE_DELAY = 2000; // 2 seconds after leaving hover zone
 const HOVER_ZONE_HEIGHT = 50; // Bottom 50px triggers dock
 
 export function Dashboard() {
-  // Theme management with toggle support
-  const { isDark, toggleTheme } = useTheme();
+  // Fetch config for theme mode
+  const [themeMode, setThemeMode] = useState<ThemeMode>('auto_sun');
+  useEffect(() => {
+    invoke<AppConfig>('get_config')
+      .then((config) => {
+        setThemeMode(config.display.theme_mode);
+      })
+      .catch((err) => {
+        console.error('Failed to load config:', err);
+      });
+  }, []);
+
+  // Fetch weather data for sunrise/sunset times
+  const { data: weatherData } = useWeather();
+  const sunTimes = weatherData
+    ? { sunrise: weatherData.sunrise, sunset: weatherData.sunset }
+    : null;
+
+  // Theme management with sunrise/sunset support
+  const { isDark, toggleTheme } = useTheme({ mode: themeMode, sunTimes });
 
   const { currentPage, isSwiping, swipeOffset, handlers, goToPage } = useSwipe({
     totalPages: PAGES.length,
