@@ -17,6 +17,8 @@ tickers = ["TRI", "VEQT.TO", "VGRO.TO", "ZGLD.TO"]
 # TickTick API access token
 # Get this from: https://developer.ticktick.com/
 access_token = ""
+# How often to refresh tasks (in minutes)
+refresh_interval_minutes = 15
 
 [google_calendar]
 # Google OAuth credentials
@@ -30,6 +32,8 @@ client_secret = ""
 access_token = ""
 refresh_token = ""
 token_expiry = ""
+# How often to refresh calendar events (in minutes)
+refresh_interval_minutes = 30
 
 [timezones]
 # Timezones to display on the overview page

@@ -86,6 +86,21 @@ fn get_fullscreen_state(window: WebviewWindow) -> Result<bool, String> {
     window.is_fullscreen().map_err(|e| e.to_string())
 }
 
+#[derive(serde::Serialize)]
+struct RefreshIntervals {
+    ticktick_minutes: u32,
+    calendar_minutes: u32,
+}
+
+#[tauri::command]
+fn get_refresh_intervals() -> Result<RefreshIntervals, String> {
+    let config = config::load_config().map_err(|e| e.to_string())?;
+    Ok(RefreshIntervals {
+        ticktick_minutes: config.ticktick.refresh_interval_minutes,
+        calendar_minutes: config.google_calendar.refresh_interval_minutes,
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -142,6 +157,7 @@ pub fn run() {
             complete_google_oauth,
             toggle_fullscreen,
             get_fullscreen_state,
+            get_refresh_intervals,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

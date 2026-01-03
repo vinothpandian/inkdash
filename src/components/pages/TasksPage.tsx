@@ -1,6 +1,8 @@
 import { useTickTick } from '@/hooks/useTickTick'
 import { TaskList } from '@/components/widgets/TaskList'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { RefreshCw } from 'lucide-react'
 
 /**
  * TasksPage - Read-only TickTick task viewer
@@ -11,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card'
  * - Backlog: Tasks without a due date
  */
 export function TasksPage() {
-  const { data, isLoading, error } = useTickTick()
+  const { data, isLoading, isRefreshing, error, refresh } = useTickTick()
 
   if (error) {
     return (
@@ -63,6 +65,17 @@ export function TasksPage() {
 
   return (
     <div className="h-full w-full page-padding flex flex-col overflow-hidden">
+      <div className="flex justify-end mb-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={refresh}
+          disabled={isRefreshing}
+          aria-label="Refresh tasks"
+        >
+          <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
       <Card className="flex-1 min-h-0">
         <CardContent className="h-full py-6">
           <TaskList tasks={data.tasks} />

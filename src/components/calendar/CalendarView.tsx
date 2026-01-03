@@ -9,7 +9,7 @@ import { Loader2, AlertCircle, Calendar } from 'lucide-react'
 import type { ProcessedEvent, CalendarColor } from '@/config/calendar'
 
 export function CalendarView() {
-  const { events, calendarSources, isLoading, error, isConfigured, startOAuth } = useCalendar()
+  const { events, calendarSources, isLoading, isRefreshing, error, isConfigured, refresh, startOAuth } = useCalendar()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>('week')
   const [disabledCalendarIds, setDisabledCalendarIds] = useState<Set<string>>(new Set())
@@ -162,6 +162,8 @@ export function CalendarView() {
         onPrevious={handlePrevious}
         onNext={handleNext}
         onToday={handleToday}
+        onRefresh={refresh}
+        isRefreshing={isRefreshing}
         calendarSources={calendarSources}
         enabledCalendarIds={enabledCalendarIds}
         onToggleCalendar={handleToggleCalendar}

@@ -40,6 +40,12 @@ pub struct StocksConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TickTickConfig {
     pub access_token: String,
+    #[serde(default = "default_ticktick_refresh_interval")]
+    pub refresh_interval_minutes: u32,
+}
+
+fn default_ticktick_refresh_interval() -> u32 {
+    15
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,6 +67,12 @@ pub struct GoogleCalendarConfig {
     pub token_expiry: String,
     #[serde(default)]
     pub calendars: Vec<CalendarSource>,
+    #[serde(default = "default_calendar_refresh_interval")]
+    pub refresh_interval_minutes: u32,
+}
+
+fn default_calendar_refresh_interval() -> u32 {
+    30
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,6 +126,7 @@ impl Default for AppConfig {
             },
             ticktick: TickTickConfig {
                 access_token: String::new(),
+                refresh_interval_minutes: 15,
             },
             google_calendar: GoogleCalendarConfig {
                 client_id: String::new(),
@@ -122,6 +135,7 @@ impl Default for AppConfig {
                 refresh_token: String::new(),
                 token_expiry: String::new(),
                 calendars: vec![],
+                refresh_interval_minutes: 30,
             },
             timezones: TimezonesConfig {
                 zones: vec![

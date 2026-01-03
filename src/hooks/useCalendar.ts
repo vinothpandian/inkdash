@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import type { CalendarEvent, CalendarSource } from '@/types'
 
@@ -6,27 +6,35 @@ interface UseCalendarReturn {
   events: CalendarEvent[]
   calendarSources: CalendarSource[]
   isLoading: boolean
+  isRefreshing: boolean
   error: string | null
   isConfigured: boolean
   refresh: () => Promise<void>
   startOAuth: () => Promise<void>
 }
 
-const REFRESH_INTERVAL = 5 * 60 * 1000 // 5 minutes
+interface RefreshIntervals {
+  ticktick_minutes: number
+  calendar_minutes: number
+}
+
+const DEFAULT_REFRESH_INTERVAL = 30 * 60 * 1000 // 30 minutes
 
 /**
  * Hook for fetching and managing Google Calendar events
  * - Fetches from Google Calendar API via Tauri backend
  * - Handles OAuth flow for authentication
  * - Supports multiple calendars with filtering
- * - Auto-refreshes every 5 minutes
+ * - Auto-refreshes based on config (default: 30 minutes)
  */
 export function useCalendar(): UseCalendarReturn {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [calendarSources, setCalendarSources] = useState<CalendarSource[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isConfigured, setIsConfigured] = useState(false)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const checkConfiguration = useCallback(async () => {
     try {
@@ -39,12 +47,15 @@ export function useCalendar(): UseCalendarReturn {
     }
   }, [])
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (showRefreshing = true) => {
+    if (showRefreshing) setIsRefreshing(true)
+
     const configured = await checkConfiguration()
     if (!configured) {
       setEvents([])
       setCalendarSources([])
       setError(null)
+      if (showRefreshing) setIsRefreshing(false)
       return
     }
 
@@ -60,6 +71,8 @@ export function useCalendar(): UseCalendarReturn {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
+    } finally {
+      if (showRefreshing) setIsRefreshing(false)
     }
   }, [checkConfiguration])
 
@@ -71,7 +84,7 @@ export function useCalendar(): UseCalendarReturn {
       // Wait for the callback
       await invoke('complete_google_oauth')
       // Refresh to get events
-      await refresh()
+      await refresh(true)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
@@ -79,25 +92,40 @@ export function useCalendar(): UseCalendarReturn {
   }, [refresh])
 
   useEffect(() => {
-    const initialFetch = async () => {
+    const setup = async () => {
       setIsLoading(true)
-      await refresh()
+
+      // Fetch refresh interval from config
+      let intervalMs = DEFAULT_REFRESH_INTERVAL
+      try {
+        const intervals = await invoke<RefreshIntervals>('get_refresh_intervals')
+        intervalMs = intervals.calendar_minutes * 60 * 1000
+      } catch {
+        // Use default if config fetch fails
+      }
+
+      await refresh(false)
       setIsLoading(false)
+
+      // Set up interval with configured duration
+      intervalRef.current = setInterval(() => refresh(false), intervalMs)
     }
 
-    initialFetch()
+    setup()
 
-    const intervalId = setInterval(refresh, REFRESH_INTERVAL)
-    return () => clearInterval(intervalId)
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
   }, [refresh])
 
   return {
     events,
     calendarSources,
     isLoading,
+    isRefreshing,
     error,
     isConfigured,
-    refresh,
+    refresh: () => refresh(true),
     startOAuth,
   }
 }

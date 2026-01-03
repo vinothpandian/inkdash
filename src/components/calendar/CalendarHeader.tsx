@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CalendarFilter } from './CalendarFilter'
 import { formatDateRange, getWeekStart, getWeekEnd } from '@/utils/calendar'
@@ -13,6 +13,8 @@ interface CalendarHeaderProps {
   onPrevious: () => void
   onNext: () => void
   onToday: () => void
+  onRefresh?: () => void
+  isRefreshing?: boolean
   calendarSources?: CalendarSource[]
   enabledCalendarIds?: string[]
   onToggleCalendar?: (calendarId: string) => void
@@ -25,6 +27,8 @@ export function CalendarHeader({
   onPrevious,
   onNext,
   onToday,
+  onRefresh,
+  isRefreshing = false,
   calendarSources = [],
   enabledCalendarIds = [],
   onToggleCalendar,
@@ -62,8 +66,19 @@ export function CalendarHeader({
         <div className="text-lg font-semibold ml-2">{getDateRangeText()}</div>
       </div>
 
-      {/* Right: Calendar filter and view mode selector */}
+      {/* Right: Refresh, calendar filter, and view mode selector */}
       <div className="flex items-center gap-3">
+        {onRefresh && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label="Refresh calendar"
+          >
+            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        )}
         {onToggleCalendar && (
           <CalendarFilter
             calendarSources={calendarSources}
