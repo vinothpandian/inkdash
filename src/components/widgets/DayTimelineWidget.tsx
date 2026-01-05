@@ -1,34 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useTimeline } from '@/context/ConfigContext';
+import type { TimelineEvent } from '@/types';
 
-interface TimelineEvent {
-  time: string; // 24h format "HH:MM"
-  label: string;
-  type: 'marker' | 'range-start' | 'range-end';
-}
+// Default timeline bounds (used as fallback)
+const DEFAULT_START_HOUR = 6; // 6:00 AM
+const DEFAULT_END_HOUR = 23; // 11:00 PM
 
-// Default schedule - can be made configurable later
+// Default schedule (used when no config is available)
 const defaultSchedule: TimelineEvent[] = [
-  { time: '06:30', label: 'Alarm', type: 'marker' },
-  { time: '07:00', label: 'Wake up', type: 'marker' },
-  { time: '08:30', label: 'Work', type: 'range-start' },
-  { time: '18:00', label: '', type: 'range-end' },
-  { time: '18:30', label: 'Bubble time', type: 'marker' },
-  { time: '21:30', label: 'In bed', type: 'marker' },
-  { time: '22:30', label: 'Sleep', type: 'marker' },
+  { time: '06:30', label: 'Alarm', event_type: 'marker' },
+  { time: '07:00', label: 'Wake up', event_type: 'marker' },
+  { time: '08:30', label: 'Work', event_type: 'range-start' },
+  { time: '18:00', label: '', event_type: 'range-end' },
+  { time: '18:30', label: 'Bubble time', event_type: 'marker' },
+  { time: '21:30', label: 'In bed', event_type: 'marker' },
+  { time: '22:30', label: 'Sleep', event_type: 'marker' },
 ];
 
-// Timeline bounds (6am to 11pm)
-const TIMELINE_START = 6; // 6:00 AM
-const TIMELINE_END = 23; // 11:00 PM
-const TIMELINE_HOURS = TIMELINE_END - TIMELINE_START;
+interface EventWithRow extends TimelineEvent {
+  row: number;
+  position: number;
+}
 
 /**
  * DayTimelineWidget - Horizontal timeline showing daily schedule
  * Shows markers for key events with a hatched work period
  */
 export function DayTimelineWidget() {
+  const { timeline, isLoading } = useTimeline();
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Use timeline from context, or fall back to defaults
+  const events = timeline?.events ?? defaultSchedule;
+  const startHour = timeline?.start_hour ?? DEFAULT_START_HOUR;
+  const endHour = timeline?.end_hour ?? DEFAULT_END_HOUR;
+  const timelineHours = endHour - startHour;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -41,14 +48,14 @@ export function DayTimelineWidget() {
   const timeToPosition = (timeStr: string): number => {
     const [hours, minutes] = timeStr.split(':').map(Number);
     const totalHours = hours + minutes / 60;
-    const position = ((totalHours - TIMELINE_START) / TIMELINE_HOURS) * 100;
+    const position = ((totalHours - startHour) / timelineHours) * 100;
     return Math.max(0, Math.min(100, position));
   };
 
   // Get current time position
   const getCurrentTimePosition = (): number => {
     const hours = currentTime.getHours() + currentTime.getMinutes() / 60;
-    const position = ((hours - TIMELINE_START) / TIMELINE_HOURS) * 100;
+    const position = ((hours - startHour) / timelineHours) * 100;
     return Math.max(0, Math.min(100, position));
   };
 
@@ -64,15 +71,68 @@ export function DayTimelineWidget() {
   };
 
   // Find work range for hatching
-  const workStart = defaultSchedule.find((e) => e.type === 'range-start');
-  const workEnd = defaultSchedule.find((e) => e.type === 'range-end');
+  const workStart = events.find((e) => e.event_type === 'range-start');
+  const workEnd = events.find((e) => e.event_type === 'range-end');
   const workStartPos = workStart ? timeToPosition(workStart.time) : 0;
   const workEndPos = workEnd ? timeToPosition(workEnd.time) : 0;
 
-  // Get marker events
-  const markers = defaultSchedule.filter((e) => e.type === 'marker');
+  // Get marker events with row assignments for staggering
+  // Assigns rows to events so labels that are too close together get staggered
+  const markers = useMemo(() => {
+    const markerEvents = events.filter((e) => e.event_type === 'marker');
+    const minGapPercent = 5;
+
+    // Calculate position for a time string
+    const calcPosition = (timeStr: string): number => {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const totalHours = hours + minutes / 60;
+      const pos = ((totalHours - startHour) / timelineHours) * 100;
+      return Math.max(0, Math.min(100, pos));
+    };
+
+    const sorted = [...markerEvents].sort(
+      (a, b) => calcPosition(a.time) - calcPosition(b.time)
+    );
+
+    // Use reduce to build the array with row assignments
+    // This avoids mutable state reassignment that React compiler doesn't like
+    const result = sorted.reduce<{
+      items: EventWithRow[];
+      lastPos: number;
+      lastRow: number;
+    }>(
+      (acc, event) => {
+        const pos = calcPosition(event.time);
+        const gap = pos - acc.lastPos;
+        const row = gap < minGapPercent ? (acc.lastRow === 0 ? 1 : 0) : 0;
+        return {
+          items: [...acc.items, { ...event, row, position: pos }],
+          lastPos: pos,
+          lastRow: row,
+        };
+      },
+      { items: [], lastPos: -100, lastRow: 1 }
+    );
+
+    return result.items;
+  }, [events, startHour, timelineHours]);
 
   const currentPos = getCurrentTimePosition();
+
+  // Show nothing while loading
+  if (isLoading) {
+    return (
+      <Card className="h-full">
+        <CardContent className="h-full flex flex-col justify-center p-6">
+          <div className="relative h-20">
+            <div className="absolute top-10 left-0 right-0">
+              <div className="h-px bg-foreground/30" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full">
@@ -100,13 +160,16 @@ export function DayTimelineWidget() {
             </defs>
           </svg>
 
-          {/* Event labels - positioned above timeline */}
+          {/* Event labels - positioned above timeline with staggering */}
           <div className="absolute top-0 left-0 right-0 h-8">
             {markers.map((event) => (
               <div
                 key={event.time}
                 className="absolute -translate-x-1/2 text-xs text-foreground whitespace-nowrap"
-                style={{ left: `${timeToPosition(event.time)}%` }}
+                style={{
+                  left: `${event.position}%`,
+                  top: event.row === 1 ? '12px' : '0px',
+                }}
               >
                 {event.label}
               </div>
@@ -117,7 +180,7 @@ export function DayTimelineWidget() {
                 className="absolute -translate-x-1/2 text-xs text-foreground whitespace-nowrap"
                 style={{ left: `${(workStartPos + workEndPos) / 2}%` }}
               >
-                Work
+                {workStart.label || 'Work'}
               </div>
             )}
           </div>
@@ -145,7 +208,7 @@ export function DayTimelineWidget() {
               <div
                 key={event.time}
                 className="absolute -top-1.5 w-px h-3 bg-foreground"
-                style={{ left: `${timeToPosition(event.time)}%` }}
+                style={{ left: `${event.position}%` }}
               />
             ))}
 
@@ -158,13 +221,16 @@ export function DayTimelineWidget() {
             )}
           </div>
 
-          {/* Time labels - positioned below timeline */}
+          {/* Time labels - positioned below timeline with staggering */}
           <div className="absolute top-14 left-0 right-0">
             {markers.map((event) => (
               <div
                 key={event.time}
                 className="absolute -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap"
-                style={{ left: `${timeToPosition(event.time)}%` }}
+                style={{
+                  left: `${event.position}%`,
+                  top: event.row === 1 ? '12px' : '0px',
+                }}
               >
                 {formatTime(event.time)}
               </div>
