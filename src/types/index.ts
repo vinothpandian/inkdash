@@ -212,3 +212,25 @@ export interface CalendarSource {
   /** Color for visual distinction */
   color: string
 }
+
+// ============================================================================
+// Timeline Types
+// ============================================================================
+
+export interface TimelineEvent {
+  /** Time in "HH:MM" format */
+  time: string
+  /** Display label for the event */
+  label: string
+  /** Type of event: marker, range-start, or range-end */
+  event_type: 'marker' | 'range-start' | 'range-end'
+}
+
+export interface TimelineData {
+  /** List of timeline events */
+  events: TimelineEvent[]
+  /** Start hour for the timeline display (0-23) */
+  start_hour: number
+  /** End hour for the timeline display (0-23) */
+  end_hour: number
+}
