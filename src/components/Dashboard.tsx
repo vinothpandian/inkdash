@@ -259,13 +259,13 @@ function DashboardContent() {
           {/* Reload Config Button */}
           <button
             onClick={reloadConfig}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-accent-warm/20 transition-colors duration-200"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-accent-warm/20 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Reload config"
             title="Reload config"
             disabled={isReloading}
           >
             <RotateCcw
-              className={`w-4 h-4 text-dock-inactive hover:text-dock-active transition-colors ${isReloading ? 'animate-spin' : ''}`}
+              className={`w-4 h-4 text-dock-inactive transition-colors ${isReloading ? 'animate-spin' : 'hover:text-dock-active'}`}
             />
           </button>
         </div>
