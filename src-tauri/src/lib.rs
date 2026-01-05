@@ -1,6 +1,7 @@
 mod api;
 mod config;
 mod oauth;
+mod timeline;
 
 use api::{CalendarEvent, CalendarListEntry, StockData, TickTickData, WeatherData};
 use config::{AppConfig, CalendarSource};
@@ -101,6 +102,11 @@ fn get_refresh_intervals() -> Result<RefreshIntervals, String> {
     })
 }
 
+#[tauri::command]
+fn get_timeline() -> Result<timeline::TimelineResponse, String> {
+    timeline::get_timeline_for_today().map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -158,6 +164,7 @@ pub fn run() {
             toggle_fullscreen,
             get_fullscreen_state,
             get_refresh_intervals,
+            get_timeline,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
