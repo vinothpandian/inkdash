@@ -64,6 +64,15 @@ export function WeatherWidget() {
     return `${displayHour}${ampm}`;
   };
 
+  // Format time with minutes (e.g., "7:23a")
+  const formatTimeWithMinutes = (date: Date) => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'p' : 'a';
+    const displayHour = hours % 12 || 12;
+    return `${displayHour}:${minutes.toString().padStart(2, '0')}${ampm}`;
+  };
+
   // Prepare chart data - every 2 hours from 12am to 10pm (12 bars)
   const chartData = weather.hourlyForecast
     .filter((_, index) => index % 2 === 0)
@@ -140,14 +149,9 @@ export function WeatherWidget() {
         </div>
 
         {/* Sunrise/Sunset times */}
-        <div className="flex justify-between text-xs text-muted-foreground mb-2">
-          <span>Sunrise {formatHour(sunriseHour)}</span>
-          <span>Sunset {formatHour(sunsetHour)}</span>
-        </div>
-
-        {/* Location */}
-        <div className="text-sm text-center text-muted-foreground">
-          {weather.location.name}
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Sunrise {formatTimeWithMinutes(sunriseDate)}</span>
+          <span>Sunset {formatTimeWithMinutes(sunsetDate)}</span>
         </div>
       </CardContent>
     </Card>

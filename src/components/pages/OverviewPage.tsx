@@ -1,5 +1,4 @@
-import { CalendarWidget, TimeWidget, WeatherWidget, TimezoneCard } from '@/components/widgets';
-import { timezones } from '@/config/timezones';
+import { CalendarWidget, TimeWidget, WeatherWidget, DayTimelineWidget } from '@/components/widgets';
 
 /**
  * OverviewPage - Main dashboard with responsive bento-style grid layout
@@ -8,33 +7,28 @@ import { timezones } from '@/config/timezones';
  * ┌─────────────────────────────────────────────────────────────────┐
  * │  ┌─────────────────┐  ┌───────────────────┐  ┌───────────────┐  │
  * │  │    Calendar     │  │      Time         │  │    Weather    │  │
- * │  │   (mini month)  │  │   (hero clock)    │  │  (forecast)   │  │
+ * │  │   (mini month)  │  │ (clock+timezones) │  │  (forecast)   │  │
  * │  └─────────────────┘  └───────────────────┘  └───────────────┘  │
- * │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌───────────┐  │
- * │  │   TZ1   │ │   TZ2   │ │   TZ3   │ │   TZ4   │ │    TZ5    │  │
- * │  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └───────────┘  │
+ * │  ┌─────────────────────────────────────────────────────────────┐│
+ * │  │                     Day Timeline                            ││
+ * │  └─────────────────────────────────────────────────────────────┘│
  * └─────────────────────────────────────────────────────────────────┘
- *
- * Mobile/Portrait:
- * Time widget spans full width, other widgets stack in 2-column grid
  */
 export function OverviewPage() {
   return (
     <div className="h-full w-full page-padding">
-      {/* Bento Grid Container - 60/40 split using calc to account for gap */}
+      {/* Bento Grid Container - 65/35 split using calc to account for gap */}
       <div className="h-full flex flex-col gap-4 max-w-5xl mx-auto w-full">
-        {/* Top Row - 3 equal width cards (60% minus half gap) */}
-        <div className="h-[calc(60%-0.5rem)] grid grid-cols-3 gap-4">
+        {/* Top Row - 3 equal width cards */}
+        <div className="h-[calc(65%-0.5rem)] grid grid-cols-3 gap-4">
           <CalendarWidget />
           <TimeWidget />
           <WeatherWidget />
         </div>
 
-        {/* Bottom Row - 5 timezone cards (40% minus half gap) */}
-        <div className="h-[calc(40%-0.5rem)] grid grid-cols-5 gap-4">
-          {timezones.map((tz) => (
-            <TimezoneCard key={tz.timezone} config={tz} />
-          ))}
+        {/* Bottom Row - Day timeline spanning full width */}
+        <div className="h-[calc(35%-0.5rem)]">
+          <DayTimelineWidget />
         </div>
       </div>
     </div>
