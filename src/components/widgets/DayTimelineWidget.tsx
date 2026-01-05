@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTimeline } from '@/context/ConfigContext';
 import type { TimelineEvent } from '@/types';
@@ -6,6 +6,9 @@ import type { TimelineEvent } from '@/types';
 // Default timeline bounds (used as fallback)
 const DEFAULT_START_HOUR = 6; // 6:00 AM
 const DEFAULT_END_HOUR = 23; // 11:00 PM
+
+// Stagger offset for labels that are too close together
+const STAGGER_OFFSET = '12px';
 
 // Default schedule (used when no config is available)
 const defaultSchedule: TimelineEvent[] = [
@@ -45,12 +48,15 @@ export function DayTimelineWidget() {
   }, []);
 
   // Convert time string to position percentage
-  const timeToPosition = (timeStr: string): number => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const totalHours = hours + minutes / 60;
-    const position = ((totalHours - startHour) / timelineHours) * 100;
-    return Math.max(0, Math.min(100, position));
-  };
+  const timeToPosition = useCallback(
+    (timeStr: string): number => {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const totalHours = hours + minutes / 60;
+      const position = ((totalHours - startHour) / timelineHours) * 100;
+      return Math.max(0, Math.min(100, position));
+    },
+    [startHour, timelineHours]
+  );
 
   // Get current time position
   const getCurrentTimePosition = (): number => {
@@ -82,16 +88,8 @@ export function DayTimelineWidget() {
     const markerEvents = events.filter((e) => e.event_type === 'marker');
     const minGapPercent = 5;
 
-    // Calculate position for a time string
-    const calcPosition = (timeStr: string): number => {
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      const totalHours = hours + minutes / 60;
-      const pos = ((totalHours - startHour) / timelineHours) * 100;
-      return Math.max(0, Math.min(100, pos));
-    };
-
     const sorted = [...markerEvents].sort(
-      (a, b) => calcPosition(a.time) - calcPosition(b.time)
+      (a, b) => timeToPosition(a.time) - timeToPosition(b.time)
     );
 
     // Use reduce to build the array with row assignments
@@ -102,7 +100,7 @@ export function DayTimelineWidget() {
       lastRow: number;
     }>(
       (acc, event) => {
-        const pos = calcPosition(event.time);
+        const pos = timeToPosition(event.time);
         const gap = pos - acc.lastPos;
         const row = gap < minGapPercent ? (acc.lastRow === 0 ? 1 : 0) : 0;
         return {
@@ -115,7 +113,7 @@ export function DayTimelineWidget() {
     );
 
     return result.items;
-  }, [events, startHour, timelineHours]);
+  }, [events, timeToPosition]);
 
   const currentPos = getCurrentTimePosition();
 
@@ -168,7 +166,7 @@ export function DayTimelineWidget() {
                 className="absolute -translate-x-1/2 text-xs text-foreground whitespace-nowrap"
                 style={{
                   left: `${event.position}%`,
-                  top: event.row === 1 ? '12px' : '0px',
+                  top: event.row === 1 ? STAGGER_OFFSET : '0px',
                 }}
               >
                 {event.label}
@@ -229,7 +227,7 @@ export function DayTimelineWidget() {
                 className="absolute -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap"
                 style={{
                   left: `${event.position}%`,
-                  top: event.row === 1 ? '12px' : '0px',
+                  top: event.row === 1 ? STAGGER_OFFSET : '0px',
                 }}
               >
                 {formatTime(event.time)}
