@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, RotateCcw } from 'lucide-react';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useTheme, type ThemeMode } from '@/hooks/useTheme';
 import { useWeather } from '@/hooks/useWeather';
+import { ConfigProvider, useTimeline } from '@/context/ConfigContext';
 import { OverviewPage } from '@/components/pages/OverviewPage';
 import { TasksPage } from '@/components/pages/TasksPage';
 import { CalendarPage } from '@/components/pages/CalendarPage';
@@ -29,6 +30,16 @@ const DOCK_HIDE_DELAY = 2000; // 2 seconds after leaving hover zone
 const HOVER_ZONE_HEIGHT = 50; // Bottom 50px triggers dock
 
 export function Dashboard() {
+  return (
+    <ConfigProvider>
+      <DashboardContent />
+    </ConfigProvider>
+  );
+}
+
+function DashboardContent() {
+  // Access config context for reload functionality
+  const { isLoading: isReloading, reloadConfig } = useTimeline();
   // Fetch config for theme mode
   const [themeMode, setThemeMode] = useState<ThemeMode>('auto_sun');
   useEffect(() => {
@@ -241,6 +252,22 @@ export function Dashboard() {
               </button>
             );
           })}
+
+          {/* Divider */}
+          <div className="w-px h-5 bg-border mx-1" />
+
+          {/* Reload Config Button */}
+          <button
+            onClick={reloadConfig}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-accent-warm/20 transition-colors duration-200"
+            aria-label="Reload config"
+            title="Reload config"
+            disabled={isReloading}
+          >
+            <RotateCcw
+              className={`w-4 h-4 text-dock-inactive hover:text-dock-active transition-colors ${isReloading ? 'animate-spin' : ''}`}
+            />
+          </button>
         </div>
       </div>
     </div>
