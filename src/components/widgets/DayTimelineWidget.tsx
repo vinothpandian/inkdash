@@ -12,13 +12,13 @@ const STAGGER_OFFSET = '12px';
 
 // Default schedule (used when no config is available)
 const defaultSchedule: TimelineEvent[] = [
-  { time: '06:30', label: 'Alarm', event_type: 'marker' },
-  { time: '07:00', label: 'Wake up', event_type: 'marker' },
-  { time: '08:30', label: 'Work', event_type: 'range-start' },
-  { time: '18:00', label: '', event_type: 'range-end' },
-  { time: '18:30', label: 'Bubble time', event_type: 'marker' },
-  { time: '21:30', label: 'In bed', event_type: 'marker' },
-  { time: '22:30', label: 'Sleep', event_type: 'marker' },
+  { time: '06:30', label: 'Alarm', type: 'marker' },
+  { time: '07:00', label: 'Wake up', type: 'marker' },
+  { time: '08:30', label: 'Work', type: 'range-start' },
+  { time: '18:00', label: '', type: 'range-end' },
+  { time: '18:30', label: 'Bubble time', type: 'marker' },
+  { time: '21:30', label: 'In bed', type: 'marker' },
+  { time: '22:30', label: 'Sleep', type: 'marker' },
 ];
 
 interface EventWithRow extends TimelineEvent {
@@ -77,15 +77,15 @@ export function DayTimelineWidget() {
   };
 
   // Find work range for hatching
-  const workStart = events.find((e) => e.event_type === 'range-start');
-  const workEnd = events.find((e) => e.event_type === 'range-end');
+  const workStart = events.find((e) => e.type === 'range-start');
+  const workEnd = events.find((e) => e.type === 'range-end');
   const workStartPos = workStart ? timeToPosition(workStart.time) : 0;
   const workEndPos = workEnd ? timeToPosition(workEnd.time) : 0;
 
   // Get marker events with row assignments for staggering
   // Assigns rows to events so labels that are too close together get staggered
   const markers = useMemo(() => {
-    const markerEvents = events.filter((e) => e.event_type === 'marker');
+    const markerEvents = events.filter((e) => e.type === 'marker');
     const minGapPercent = 5;
 
     const sorted = [...markerEvents].sort(

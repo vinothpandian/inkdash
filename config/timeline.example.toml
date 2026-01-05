@@ -1,12 +1,12 @@
 # inkdash Timeline Configuration
 # Copy this file to the appropriate location and customize:
-#   macOS: ~/Library/Application Support/inkdash/timeline.toml
+#   macOS: ~/Library/Application\ Support/inkdash/timeline.toml
 #   Linux: ~/.config/inkdash/timeline.toml
 
 # Timeline display bounds (optional)
 # Controls the visible range of the day timeline on the overview page
-start_hour = 6   # 6 AM - timeline starts here
-end_hour = 23    # 11 PM - timeline ends here
+start_hour = 6 # 6 AM - timeline starts here
+end_hour = 23  # 11 PM - timeline ends here
 
 # Default schedule (applies to all days unless overridden)
 [default]

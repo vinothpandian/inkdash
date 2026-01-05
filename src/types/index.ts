@@ -223,7 +223,7 @@ export interface TimelineEvent {
   /** Display label for the event */
   label: string
   /** Type of event: marker, range-start, or range-end */
-  event_type: 'marker' | 'range-start' | 'range-end'
+  type: 'marker' | 'range-start' | 'range-end'
 }
 
 export interface TimelineData {
