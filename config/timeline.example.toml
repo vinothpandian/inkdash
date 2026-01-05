@@ -1,0 +1,60 @@
+# inkdash Timeline Configuration
+# Copy this file to the appropriate location and customize:
+#   macOS: ~/Library/Application Support/inkdash/timeline.toml
+#   Linux: ~/.config/inkdash/timeline.toml
+
+# Timeline display bounds (optional)
+# Controls the visible range of the day timeline on the overview page
+start_hour = 6   # 6 AM - timeline starts here
+end_hour = 23    # 11 PM - timeline ends here
+
+# Default schedule (applies to all days unless overridden)
+[default]
+# Events define markers and ranges on the timeline
+#
+# Event types:
+#   "marker"      - A single point in time (e.g., "Wake up", "Sleep")
+#   "range-start" - Beginning of a time block (e.g., start of work)
+#   "range-end"   - End of a time block (pairs with range-start)
+#
+# Time format: "HH:MM" in 24-hour format
+# Label: Text shown on the timeline (can be empty for range-end)
+events = [
+  { time = "06:30", label = "Alarm", type = "marker" },
+  { time = "07:00", label = "Wake up", type = "marker" },
+  { time = "08:30", label = "Work", type = "range-start" },
+  { time = "18:00", label = "", type = "range-end" },
+  { time = "18:30", label = "Bubble time", type = "marker" },
+  { time = "21:30", label = "In bed", type = "marker" },
+  { time = "22:30", label = "Sleep", type = "marker" },
+]
+
+# Day-specific overrides (optional)
+# Use these to define different schedules for specific days
+# Day names must be lowercase: monday, tuesday, wednesday, thursday,
+#                              friday, saturday, sunday
+
+# Example: Different schedule for gym days
+[[overrides]]
+days = ["tuesday", "thursday"]
+events = [
+  { time = "06:00", label = "Alarm", type = "marker" },
+  { time = "06:30", label = "Gym", type = "range-start" },
+  { time = "07:30", label = "", type = "range-end" },
+  { time = "08:30", label = "Work", type = "range-start" },
+  { time = "18:00", label = "", type = "range-end" },
+  { time = "18:30", label = "Bubble time", type = "marker" },
+  { time = "21:30", label = "In bed", type = "marker" },
+  { time = "22:30", label = "Sleep", type = "marker" },
+]
+
+# Example: Weekend schedule (later wake up, no work)
+[[overrides]]
+days = ["saturday", "sunday"]
+events = [
+  { time = "08:00", label = "Wake up", type = "marker" },
+  { time = "09:00", label = "Brunch", type = "marker" },
+  { time = "18:00", label = "Dinner", type = "marker" },
+  { time = "22:00", label = "In bed", type = "marker" },
+  { time = "23:00", label = "Sleep", type = "marker" },
+]
