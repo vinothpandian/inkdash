@@ -120,7 +120,7 @@ export function WeatherWidget() {
         </div>
 
         {/* Hourly bar chart - all 24 hours */}
-        <div className="h-32 mt-1 mb-1">
+        <div className="h-44 mt-1 mb-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
               <Tooltip
