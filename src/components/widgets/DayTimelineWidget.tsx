@@ -8,7 +8,7 @@ const DEFAULT_START_HOUR = 6; // 6:00 AM
 const DEFAULT_END_HOUR = 23; // 11:00 PM
 
 // Stagger offset for labels that are too close together
-const STAGGER_OFFSET = '12px';
+const STAGGER_OFFSET = '10px';
 
 // Default schedule (used when no config is available)
 const defaultSchedule: TimelineEvent[] = [
@@ -65,14 +65,10 @@ export function DayTimelineWidget() {
     return Math.max(0, Math.min(100, position));
   };
 
-  // Format time for display
+  // Format time for display (h:mm format, no am/pm)
   const formatTime = (timeStr: string): string => {
     const [hours, minutes] = timeStr.split(':').map(Number);
-    const ampm = hours >= 12 ? 'pm' : 'am';
     const displayHour = hours % 12 || 12;
-    if (minutes === 0) {
-      return `${displayHour}${ampm}`;
-    }
     return `${displayHour}:${minutes.toString().padStart(2, '0')}`;
   };
 
@@ -121,9 +117,9 @@ export function DayTimelineWidget() {
   if (isLoading) {
     return (
       <Card className="h-full">
-        <CardContent className="h-full flex flex-col justify-center p-6">
-          <div className="relative h-20">
-            <div className="absolute top-10 left-0 right-0">
+        <CardContent className="h-full flex flex-col justify-center px-6 py-2">
+          <div className="relative h-16">
+            <div className="absolute top-8 left-0 right-0">
               <div className="h-px bg-foreground/30" />
             </div>
           </div>
@@ -134,8 +130,8 @@ export function DayTimelineWidget() {
 
   return (
     <Card className="h-full">
-      <CardContent className="h-full flex flex-col justify-center p-6">
-        <div className="relative h-20">
+      <CardContent className="h-full flex flex-col justify-center px-6 py-2">
+        <div className="relative h-16">
           {/* SVG for hatched pattern definition */}
           <svg className="absolute" width="0" height="0">
             <defs>
@@ -159,14 +155,14 @@ export function DayTimelineWidget() {
           </svg>
 
           {/* Event labels - positioned above timeline with staggering */}
-          <div className="absolute top-0 left-0 right-0 h-8">
+          <div className="absolute top-0 left-0 right-0 h-6">
             {markers.map((event) => (
               <div
                 key={event.time}
                 className="absolute -translate-x-1/2 text-xs text-foreground whitespace-nowrap"
                 style={{
                   left: `${event.position}%`,
-                  top: event.row === 1 ? STAGGER_OFFSET : '0px',
+                  top: event.row === 1 ? STAGGER_OFFSET : '-4px',
                 }}
               >
                 {event.label}
@@ -184,7 +180,7 @@ export function DayTimelineWidget() {
           </div>
 
           {/* Main timeline container */}
-          <div className="absolute top-10 left-0 right-0">
+          <div className="absolute top-8 left-0 right-0">
             {/* Timeline base line */}
             <div className="h-px bg-foreground/30" />
 
@@ -213,14 +209,14 @@ export function DayTimelineWidget() {
             {/* Current time indicator */}
             {currentPos >= 0 && currentPos <= 100 && (
               <div
-                className="absolute -top-2 w-2 h-2 bg-foreground rounded-full -translate-x-1/2"
+                className="absolute -top-1.5 size-3 bg-foreground rounded-full -translate-x-1/2"
                 style={{ left: `${currentPos}%` }}
               />
             )}
           </div>
 
           {/* Time labels - positioned below timeline with staggering */}
-          <div className="absolute top-14 left-0 right-0">
+          <div className="absolute top-10 left-0 right-0">
             {markers.map((event) => (
               <div
                 key={event.time}

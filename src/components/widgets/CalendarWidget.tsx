@@ -44,19 +44,19 @@ export function CalendarWidget() {
   }
 
   return (
-    <Card className="h-full overflow-hidden">
-      <CardContent className="h-full flex flex-col p-4">
+    <Card className="h-full">
+      <CardContent className="h-full flex flex-col justify-center p-4">
         {/* Month and Year */}
         <div className="text-lg font-medium-labels mb-3">
           {monthName} <span className="text-muted-foreground font-normal">{currentYear}</span>
         </div>
 
         {/* Day headers */}
-        <div className="grid grid-cols-7 gap-0.5 mb-1">
+        <div className="grid grid-cols-7 gap-0.5">
           {dayNames.map((day, i) => (
             <div
               key={i}
-              className="text-center text-xs text-muted-foreground font-medium py-1"
+              className="text-center text-xs text-muted-foreground font-medium py-0.5"
             >
               {day}
             </div>
@@ -64,15 +64,15 @@ export function CalendarWidget() {
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-0.5 flex-1 content-start">
+        <div className="grid grid-cols-7 gap-0.5">
           {calendarDays.map((day, index) => (
             <div
               key={index}
               className={`
-                flex items-center justify-center text-sm aspect-square
+                flex items-center justify-center text-sm py-1
                 ${
                   day === currentDate
-                    ? 'bg-foreground text-background rounded-full font-medium'
+                    ? 'bg-foreground text-background rounded-full font-medium aspect-square'
                     : 'text-foreground'
                 }
               `}

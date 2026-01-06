@@ -108,19 +108,19 @@ export function WeatherWidget() {
 
   return (
     <Card className="h-full">
-      <CardContent className="h-full flex flex-col p-4">
+      <CardContent className="h-full flex flex-col justify-center p-4">
         {/* Condition */}
-        <div className="text-lg font-medium-labels text-foreground text-center">
+        <div className="text-base font-medium-labels text-foreground text-center">
           {conditionText}
         </div>
 
         {/* Feels like */}
-        <div className="text-sm text-muted-foreground mt-0.5 text-center">
+        <div className="text-xs text-muted-foreground text-center">
           Feels like {feelsLikeText}
         </div>
 
         {/* Hourly bar chart - all 24 hours */}
-        <div className="flex-1 mt-2 mb-1 min-h-0">
+        <div className="h-32 mt-1 mb-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
               <Tooltip

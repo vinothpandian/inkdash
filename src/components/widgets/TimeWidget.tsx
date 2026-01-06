@@ -100,36 +100,36 @@ export function TimeWidget() {
 
   return (
     <Card className="h-full">
-      <CardContent className="h-full flex flex-col items-center justify-center p-6">
+      <CardContent className="h-full flex flex-col items-center justify-center p-4">
         {/* Date */}
-        <div className="text-lg font-medium-labels text-foreground tracking-wide">
+        <div className="text-base font-medium-labels text-foreground tracking-wide">
           {dateString}
         </div>
 
         {/* Day of week */}
-        <div className="text-base text-muted-foreground/70 mt-1">
+        <div className="text-sm text-muted-foreground/70">
           {dayOfWeek}
         </div>
 
         {/* Large time display */}
-        <div className="text-6xl sm:text-7xl font-light-numbers text-foreground mt-4 tracking-tight">
+        <div className="text-[3.25rem] font-light-numbers text-foreground mt-2 tracking-tight">
           {timeString}
         </div>
 
         {/* Timezone list with working hours bars */}
-        <div className="mt-5 space-y-1.5 w-full max-w-xs">
+        <div className="mt-3 space-y-0.5 mx-auto">
           {timezones.map((tz) => {
             const { time: tzTime, ampm } = getTimezoneTime(tz.timezone);
             return (
-              <div key={tz.timezone} className="flex items-center gap-3">
+              <div key={tz.timezone} className="flex items-center gap-2">
                 {/* City name */}
-                <span className="text-sm text-foreground w-20 truncate">{tz.name}</span>
+                <span className="text-xs text-foreground w-16 truncate">{tz.name}</span>
                 {/* Working hours bar */}
                 <WorkingHoursBar timezone={tz.timezone} currentTime={time} />
                 {/* Time */}
-                <span className="text-sm tabular-nums w-16 text-right">
+                <span className="text-xs tabular-nums w-14 text-right">
                   <span className="text-foreground">{tzTime}</span>
-                  <span className="text-muted-foreground text-xs">{ampm}</span>
+                  <span className="text-muted-foreground text-[10px]">{ampm}</span>
                 </span>
               </div>
             );
