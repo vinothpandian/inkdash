@@ -47,7 +47,7 @@ export function CalendarWidget() {
     <Card className="h-full">
       <CardContent className="h-full flex flex-col justify-center p-4">
         {/* Month and Year */}
-        <div className="text-lg font-medium-labels mb-3">
+        <div className="text-xl font-medium-labels mb-3">
           {monthName} <span className="text-muted-foreground font-normal">{currentYear}</span>
         </div>
 
@@ -56,7 +56,7 @@ export function CalendarWidget() {
           {dayNames.map((day, i) => (
             <div
               key={i}
-              className="text-center text-xs text-muted-foreground font-medium py-0.5"
+              className="text-center text-sm text-muted-foreground font-medium py-0.5"
             >
               {day}
             </div>
@@ -69,7 +69,7 @@ export function CalendarWidget() {
             <div
               key={index}
               className={`
-                flex items-center justify-center text-sm py-1
+                flex items-center justify-center text-base py-1
                 ${
                   day === currentDate
                     ? 'bg-foreground text-background rounded-full font-medium aspect-square'

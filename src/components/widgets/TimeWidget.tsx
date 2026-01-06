@@ -102,17 +102,17 @@ export function TimeWidget() {
     <Card className="h-full">
       <CardContent className="h-full flex flex-col items-center justify-center p-4">
         {/* Date */}
-        <div className="text-base font-medium-labels text-foreground tracking-wide">
+        <div className="text-lg font-medium-labels text-foreground tracking-wide">
           {dateString}
         </div>
 
         {/* Day of week */}
-        <div className="text-sm text-muted-foreground/70">
+        <div className="text-base text-muted-foreground/70">
           {dayOfWeek}
         </div>
 
         {/* Large time display */}
-        <div className="text-[3.25rem] font-light-numbers text-foreground mt-2 tracking-tight">
+        <div className="text-[3.5rem] font-light-numbers text-foreground mt-2 tracking-tight">
           {timeString}
         </div>
 
@@ -123,13 +123,13 @@ export function TimeWidget() {
             return (
               <div key={tz.timezone} className="flex items-center gap-2">
                 {/* City name */}
-                <span className="text-xs text-foreground w-16 truncate">{tz.name}</span>
+                <span className="text-sm text-foreground w-20 truncate">{tz.name}</span>
                 {/* Working hours bar */}
                 <WorkingHoursBar timezone={tz.timezone} currentTime={time} />
                 {/* Time */}
-                <span className="text-xs tabular-nums w-14 text-right">
+                <span className="text-sm tabular-nums w-16 text-right">
                   <span className="text-foreground">{tzTime}</span>
-                  <span className="text-muted-foreground text-[10px]">{ampm}</span>
+                  <span className="text-muted-foreground text-xs">{ampm}</span>
                 </span>
               </div>
             );

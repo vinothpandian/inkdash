@@ -110,17 +110,17 @@ export function WeatherWidget() {
     <Card className="h-full">
       <CardContent className="h-full flex flex-col justify-center p-4">
         {/* Condition */}
-        <div className="text-base font-medium-labels text-foreground text-center">
+        <div className="text-lg font-medium-labels text-foreground text-center">
           {conditionText}
         </div>
 
         {/* Feels like */}
-        <div className="text-xs text-muted-foreground text-center">
+        <div className="text-sm text-muted-foreground text-center">
           Feels like {feelsLikeText}
         </div>
 
         {/* Hourly bar chart - all 24 hours */}
-        <div className="h-44 mt-1 mb-1">
+        <div className="h-48 mt-1 mb-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
               <Tooltip
@@ -149,7 +149,7 @@ export function WeatherWidget() {
         </div>
 
         {/* Sunrise/Sunset times */}
-        <div className="flex justify-between text-xs text-muted-foreground">
+        <div className="flex justify-between text-sm text-muted-foreground">
           <span>Sunrise {formatTimeWithMinutes(sunriseDate)}</span>
           <span>Sunset {formatTimeWithMinutes(sunsetDate)}</span>
         </div>
