@@ -26,6 +26,13 @@ interface EventWithRow extends TimelineEvent {
   position: number;
 }
 
+interface RangePair {
+  start: TimelineEvent;
+  end: TimelineEvent;
+  startPos: number;
+  endPos: number;
+}
+
 /**
  * DayTimelineWidget - Horizontal timeline showing daily schedule
  * Shows markers for key events with a hatched work period
@@ -72,11 +79,28 @@ export function DayTimelineWidget() {
     return `${displayHour}:${minutes.toString().padStart(2, '0')}`;
   };
 
-  // Find work range for hatching
-  const workStart = events.find((e) => e.type === 'range-start');
-  const workEnd = events.find((e) => e.type === 'range-end');
-  const workStartPos = workStart ? timeToPosition(workStart.time) : 0;
-  const workEndPos = workEnd ? timeToPosition(workEnd.time) : 0;
+  // Find all range pairs for hatching
+  // Pairs range-start with the next range-end in chronological order
+  const rangePairs = useMemo(() => {
+    const pairs: RangePair[] = [];
+    const rangeStarts = events
+      .filter((e) => e.type === 'range-start')
+      .sort((a, b) => timeToPosition(a.time) - timeToPosition(b.time));
+    const rangeEnds = events
+      .filter((e) => e.type === 'range-end')
+      .sort((a, b) => timeToPosition(a.time) - timeToPosition(b.time));
+
+    // Match each range-start with the nearest following range-end
+    for (let i = 0; i < rangeStarts.length && i < rangeEnds.length; i++) {
+      pairs.push({
+        start: rangeStarts[i],
+        end: rangeEnds[i],
+        startPos: timeToPosition(rangeStarts[i].time),
+        endPos: timeToPosition(rangeEnds[i].time),
+      });
+    }
+    return pairs;
+  }, [events, timeToPosition]);
 
   // Get marker events with row assignments for staggering
   // Assigns rows to events so labels that are too close together get staggered
@@ -168,15 +192,16 @@ export function DayTimelineWidget() {
                 {event.label}
               </div>
             ))}
-            {/* Work label */}
-            {workStart && (
+            {/* Range labels (centered over each range) */}
+            {rangePairs.map((pair, index) => (
               <div
+                key={`range-label-${index}`}
                 className="absolute -translate-x-1/2 text-xs text-foreground whitespace-nowrap"
-                style={{ left: `${(workStartPos + workEndPos) / 2}%` }}
+                style={{ left: `${(pair.startPos + pair.endPos) / 2}%` }}
               >
-                {workStart.label || 'Work'}
+                {pair.start.label || 'Work'}
               </div>
-            )}
+            ))}
           </div>
 
           {/* Main timeline container */}
@@ -184,18 +209,19 @@ export function DayTimelineWidget() {
             {/* Timeline base line */}
             <div className="h-px bg-foreground/30" />
 
-            {/* Work period hatching */}
-            {workStart && workEnd && (
+            {/* Range period hatching */}
+            {rangePairs.map((pair, index) => (
               <svg
+                key={`range-hatch-${index}`}
                 className="absolute -top-3 h-6"
                 style={{
-                  left: `${workStartPos}%`,
-                  width: `${workEndPos - workStartPos}%`,
+                  left: `${pair.startPos}%`,
+                  width: `${pair.endPos - pair.startPos}%`,
                 }}
               >
                 <rect width="100%" height="100%" fill="url(#hatch)" />
               </svg>
-            )}
+            ))}
 
             {/* Event markers */}
             {markers.map((event) => (
