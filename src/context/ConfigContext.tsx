@@ -82,6 +82,24 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
     }
   }, [fetchTimeline])
 
+  // Re-fetch timeline when the day changes (for day-specific schedules)
+  useEffect(() => {
+    let lastDay = new Date().getDay()
+
+    const checkDayChange = () => {
+      const currentDay = new Date().getDay()
+      if (currentDay !== lastDay) {
+        lastDay = currentDay
+        fetchTimeline()
+      }
+    }
+
+    // Check every minute for day change
+    const intervalId = setInterval(checkDayChange, 60000)
+
+    return () => clearInterval(intervalId)
+  }, [fetchTimeline])
+
   const value: ConfigContextValue = {
     timeline,
     isLoading,
