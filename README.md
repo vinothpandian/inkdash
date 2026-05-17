@@ -2,6 +2,11 @@
 
 A minimal zero-native desktop app with a web frontend.
 
+> [!CAUTION]
+> **Personal locked-down Raspberry Pi project.**
+>
+> This dashboard is built for personal use on a locked-down Raspberry Pi. It is not a hardened general-purpose desktop app or a multi-user service. Run it only on a machine and network you control, and only use it if you're brave.
+
 ## Setup
 
 `zig build dev`, `zig build run`, and `zig build package` install frontend dependencies automatically. To install them explicitly, run:
