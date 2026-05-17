@@ -1,0 +1,288 @@
+/* Import DM Sans for refined, geometric typography */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+@import "tailwindcss";
+
+/*
+ * inkdash Theme Configuration
+ * Matte design aesthetic - warm neutrals, paper-like texture, refined minimalism
+ */
+
+@theme inline {
+  /* Border radius - generous for soft, rounded cards */
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: calc(var(--radius) - 0.125rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.25rem);
+
+  /* Custom shadow - soft, diffused, matte */
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.02);
+  --shadow-dock: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+
+  /* Typography - DM Sans for refined, geometric feel */
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * CSS Variables for theming
+ * Using class strategy for dark mode (toggle .dark on html element)
+ * Matte aesthetic with warm neutral palette
+ */
+:root {
+  /* Base radius */
+  --radius: 1rem;
+
+  /* Light theme colors - warm matte palette */
+  --background: 40 20% 97%;
+  --foreground: 30 8% 18%;
+
+  --card: 40 25% 99%;
+  --card-foreground: 30 8% 18%;
+
+  --popover: 40 25% 99%;
+  --popover-foreground: 30 8% 18%;
+
+  --primary: 30 8% 22%;
+  --primary-foreground: 40 20% 97%;
+
+  --secondary: 35 12% 92%;
+  --secondary-foreground: 30 8% 22%;
+
+  --muted: 35 12% 93%;
+  --muted-foreground: 30 6% 50%;
+
+  --accent: 35 15% 90%;
+  --accent-foreground: 30 8% 22%;
+
+  --destructive: 0 65% 55%;
+  --destructive-foreground: 40 20% 97%;
+
+  --border: 35 15% 90%;
+  --input: 35 15% 88%;
+  --ring: 30 8% 22%;
+
+  /* Chart colors - warm matte grays */
+  --chart-1: 30 8% 25%;
+  --chart-2: 30 6% 38%;
+  --chart-3: 30 5% 52%;
+  --chart-4: 30 4% 66%;
+  --chart-5: 30 4% 80%;
+
+  /* Dock colors */
+  --dock-bg: 40 20% 99%;
+  --dock-active: 30 8% 18%;
+  --dock-inactive: 30 6% 70%;
+
+  /* Accent colors - subtle warm amber */
+  --accent-warm: 38 70% 60%;
+  --accent-warm-muted: 38 40% 75%;
+}
+
+.dark {
+  /* Dark theme colors - warm matte dark palette */
+  --background: 30 8% 8%;
+  --foreground: 35 12% 92%;
+
+  --card: 30 8% 12%;
+  --card-foreground: 35 12% 92%;
+
+  --popover: 30 8% 12%;
+  --popover-foreground: 35 12% 92%;
+
+  --primary: 35 12% 92%;
+  --primary-foreground: 30 8% 10%;
+
+  --secondary: 30 6% 18%;
+  --secondary-foreground: 35 12% 92%;
+
+  --muted: 30 6% 18%;
+  --muted-foreground: 30 6% 55%;
+
+  --accent: 30 6% 18%;
+  --accent-foreground: 35 12% 92%;
+
+  --destructive: 0 55% 48%;
+  --destructive-foreground: 35 12% 92%;
+
+  --border: 30 6% 18%;
+  --input: 30 6% 20%;
+  --ring: 35 12% 85%;
+
+  /* Chart colors - dark mode warm grays */
+  --chart-1: 35 10% 85%;
+  --chart-2: 35 8% 72%;
+  --chart-3: 35 6% 55%;
+  --chart-4: 30 5% 38%;
+  --chart-5: 30 4% 22%;
+
+  /* Dock colors - dark */
+  --dock-bg: 30 8% 14%;
+  --dock-active: 35 12% 92%;
+  --dock-inactive: 30 6% 45%;
+
+  /* Accent colors - subtle warm amber (dark mode) */
+  --accent-warm: 38 65% 55%;
+  --accent-warm-muted: 38 30% 40%;
+}
+
+/*
+ * Base layer - apply theme variables to Tailwind
+ */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior: none;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    cursor: none;
+    /* Subtle paper-like texture overlay */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-blend-mode: overlay;
+    background-size: 150px;
+  }
+
+  .dark body {
+    background-blend-mode: soft-light;
+  }
+
+  /* Typography weight utilities for dashboard numbers */
+  .font-light-numbers {
+    font-weight: 300;
+    letter-spacing: -0.02em;
+  }
+
+  .font-medium-labels {
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+}
+
+/*
+ * Custom theme utilities
+ */
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --color-dock-bg: hsl(var(--dock-bg));
+  --color-dock-active: hsl(var(--dock-active));
+  --color-dock-inactive: hsl(var(--dock-inactive));
+
+  --color-accent-warm: hsl(var(--accent-warm));
+  --color-accent-warm-muted: hsl(var(--accent-warm-muted));
+}
+
+/*
+ * Custom component styles
+ */
+@layer components {
+  /* Matte card style */
+  .matte-card {
+    @apply bg-card rounded-lg;
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Floating dock */
+  .floating-dock {
+    @apply bg-dock-bg rounded-full;
+    box-shadow: var(--shadow-dock);
+  }
+
+  /* Iframe container with rounded corners */
+  .iframe-container {
+    @apply bg-card rounded-lg overflow-hidden;
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Page padding for consistent layout */
+  .page-padding {
+    @apply p-4 sm:p-5 md:p-6;
+  }
+}
+
+/*
+ * Animation utilities
+ */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}

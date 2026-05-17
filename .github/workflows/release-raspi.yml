@@ -1,0 +1,58 @@
+name: Release (Raspberry Pi)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Zig 0.16.0
+        run: |
+          curl -fsSL "https://ziglang.org/download/0.16.0/zig-linux-aarch64-0.16.0.tar.xz" -o zig.tar.xz
+          tar -xf zig.tar.xz
+          echo "$GITHUB_WORKSPACE/zig-linux-aarch64-0.16.0" >> $GITHUB_PATH
+
+      - name: Install zero-native
+        run: |
+          npm install -g zero-native
+          echo "ZN_PATH=$(npm root -g)/zero-native" >> $GITHUB_ENV
+
+      - name: Build release package
+        run: |
+          zig build package \
+            -Doptimize=ReleaseFast \
+            -Dpackage-target=linux \
+            -Dzero-native-path="$ZN_PATH"
+
+      - name: Create archive
+        run: |
+          VERSION="${GITHUB_REF_NAME:-dev}"
+          PKG=$(find zig-out/package -maxdepth 1 -mindepth 1 -type d | head -1)
+          tar -czf "inkdash-${VERSION}-raspi-arm64.tar.gz" -C zig-out/package "$(basename "$PKG")"
+          echo "TARBALL=inkdash-${VERSION}-raspi-arm64.tar.gz" >> $GITHUB_ENV
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ env.TARBALL }}
+          generate_release_notes: true
