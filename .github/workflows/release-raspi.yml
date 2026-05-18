@@ -13,6 +13,8 @@ jobs:
       image: debian:12
     permissions:
       contents: write
+    env:
+      ZERO_NATIVE_VERSION: 0.1.3
 
     steps:
       - name: Install system dependencies
@@ -48,7 +50,7 @@ jobs:
 
       - name: Install zero-native
         run: |
-          npm install -g zero-native
+          npm install --no-audit --no-fund -g "zero-native@${ZERO_NATIVE_VERSION}"
           echo "ZN_PATH=$(npm root -g)/zero-native" >> $GITHUB_ENV
 
       - name: Build release package
@@ -56,6 +58,8 @@ jobs:
           zig build package \
             -Doptimize=ReleaseFast \
             -Dpackage-target=linux \
+            -Dplatform=linux \
+            -Dweb-engine=system \
             -Dzero-native-path="$ZN_PATH"
 
       - name: Create archive
