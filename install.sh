@@ -175,6 +175,11 @@ check_runtime_symbols() {
         echo "  sudo apt-get install -y libgtk-4-1 libgtk-4-common"
         echo "  sudo apt-get install -y libwebkitgtk-6.0-4 libjavascriptcoregtk-6.0-1"
         echo "If using a non-stable Pi image, prefer the latest official repository packages for these libraries."
+        echo "If these packages are still too old for your OS, rebuild inkdash on this machine instead of using the prebuilt release."
+        echo "Build fallback command:"
+        echo "  git clone https://github.com/$REPO.git /tmp/inkdash && cd /tmp/inkdash && npm install --prefix frontend"
+        echo "  npx --yes zero-native doctor --manifest app.zon"
+        echo "  zig build package -Dplatform=linux -Dpackage-target=linux -Doptimize=ReleaseFast -Dweb-engine=system"
         exit 1
     fi
 }
