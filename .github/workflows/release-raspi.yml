@@ -17,6 +17,20 @@ jobs:
       ZERO_NATIVE_VERSION: 0.2.0
 
     steps:
+      - name: Configure apt cache
+        run: |
+          rm -f /etc/apt/apt.conf.d/docker-clean
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+          mkdir -p /var/cache/apt/archives/partial
+
+      - name: Restore apt package cache
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: debian-12-arm64-apt-v1
+          restore-keys: |
+            debian-12-arm64-apt-
+
       - name: Install system dependencies
         run: |
           apt-get update -q
