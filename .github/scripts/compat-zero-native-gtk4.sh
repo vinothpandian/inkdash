@@ -171,3 +171,75 @@ EOF2
   sed -n "$END,$((END+999999))p" "$FILE"
 } > "$TMP"
 mv "$TMP" "$FILE"
+
+ALERT_START=$(grep -n "^typedef struct zero_native_alert_state" "$FILE" | head -n 1 | cut -d: -f1 || true)
+if [ -n "$ALERT_START" ]; then
+  TMP2="$FILE.alertcompat"
+  {
+    sed -n "1,$((ALERT_START-1))p" "$FILE"
+    cat <<'EOF3'
+
+#if GTK_CHECK_VERSION(4, 10, 0)
+
+typedef struct zero_native_alert_state {
+    GMainLoop *loop;
+    int response;
+} zero_native_alert_state_t;
+
+static void zero_native_alert_done(GObject *source, GAsyncResult *result, gpointer data) {
+    zero_native_alert_state_t *state = data;
+    GError *error = NULL;
+    state->response = gtk_alert_dialog_choose_finish(GTK_ALERT_DIALOG(source), result, &error);
+    if (error) {
+        g_error_free(error);
+        state->response = 0;
+    }
+    g_main_loop_quit(state->loop);
+}
+
+int zero_native_gtk_show_message_dialog(zero_native_gtk_host_t *host, const zero_native_gtk_message_dialog_opts_t *opts) {
+    GtkAlertDialog *dialog = gtk_alert_dialog_new(NULL);
+    char *title = zero_native_bytes_to_string(opts->title, opts->title_len);
+    char *message = zero_native_bytes_to_string(opts->message, opts->message_len);
+    char *informative = zero_native_bytes_to_string(opts->informative_text, opts->informative_text_len);
+    char *primary = zero_native_bytes_to_string(opts->primary_button, opts->primary_button_len);
+    char *secondary = zero_native_bytes_to_string(opts->secondary_button, opts->secondary_button_len);
+    char *tertiary = zero_native_bytes_to_string(opts->tertiary_button, opts->tertiary_button_len);
+    gtk_alert_dialog_set_message(dialog, title ? title : (message ? message : ""));
+    if (informative || (title && message)) gtk_alert_dialog_set_detail(dialog, informative ? informative : message);
+    const char *buttons[4] = { primary ? primary : "OK", NULL, NULL, NULL };
+    if (secondary) buttons[1] = secondary;
+    if (tertiary) buttons[2] = tertiary;
+    gtk_alert_dialog_set_buttons(dialog, buttons);
+    zero_native_alert_state_t state = { .loop = g_main_loop_new(NULL, FALSE), .response = 0 };
+    if (state.loop) {
+        gtk_alert_dialog_choose(dialog, zero_native_parent_window(host), NULL, zero_native_alert_done, &state);
+        g_main_loop_run(state.loop);
+        g_main_loop_unref(state.loop);
+    }
+    if (title) free(title);
+    if (message) free(message);
+    if (informative) free(informative);
+    if (primary) free(primary);
+    if (secondary) free(secondary);
+    if (tertiary) free(tertiary);
+    g_object_unref(dialog);
+    if (state.response <= 0) return 0;
+    if (state.response == 1) return 1;
+    return 2;
+}
+
+#else
+
+int zero_native_gtk_show_message_dialog(zero_native_gtk_host_t *host, const zero_native_gtk_message_dialog_opts_t *opts) {
+    (void)host;
+    (void)opts;
+    g_warning("zero-native message dialogs are not available with GTK < 4.10");
+    return 0;
+}
+
+#endif
+EOF3
+  } > "$TMP2"
+  mv "$TMP2" "$FILE"
+fi
