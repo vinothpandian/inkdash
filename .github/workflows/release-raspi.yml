@@ -63,6 +63,8 @@ jobs:
             -Dpackage-target=linux \
             -Dplatform=linux \
             -Dweb-engine=system \
+            -Dtarget=aarch64-linux \
+            -Dcpu=baseline \
             -Dzero-native-path="$ZN_PATH"
 
       - name: Create archive
