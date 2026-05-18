@@ -16,17 +16,44 @@ DESKTOP_FILE="$HOME/.local/share/applications/${SERVICE_NAME}.desktop"
 
 echo "Fetching latest inkdash release..."
 
-DOWNLOAD_URL=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
-    | awk -F '"' '/browser_download_url/ && /raspi-arm64\.tar\.gz/ { print $4; exit }')
+RELEASE_JSON=$(mktemp)
+
+    if ! curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" -o "$RELEASE_JSON"; then
+    echo "Error: no releases found or GitHub API unavailable for https://github.com/$REPO/releases"
+    exit 1
+fi
+
+RELEASE_TAG=$(awk -F '"' '/"tag_name"/ { print $4; exit }' "$RELEASE_JSON")
+HOST_ARCH="$(uname -m)"
+
+case "$HOST_ARCH" in
+    aarch64|arm64|armv7l|armv7) ARCH_PATTERN='(arm64|aarch64|raspi-arm64|raspi-aarch64|armv7|armv7l)'
+    ;;
+    x86_64|amd64) ARCH_PATTERN='(amd64|x86_64|x64)'
+    ;;
+    *) ARCH_PATTERN='(linux|arm64|aarch64|amd64|x86_64|x64|armv7|armv7l)'
+    ;;
+esac
+
+DOWNLOAD_URL="$(awk -F '"' '/browser_download_url/ {print $4}' "$RELEASE_JSON" \
+    | grep -Ei "/.*(linux)?.*${ARCH_PATTERN}.*\\.tar\\.gz$" \
+    | head -n 1)"
 
 if [ -z "$DOWNLOAD_URL" ]; then
-    echo "Error: no ARM64 release found at https://github.com/$REPO/releases"
+    DOWNLOAD_URL="$(awk -F '"' '/browser_download_url/ {print $4}' "$RELEASE_JSON" \
+        | grep -Ei '\\.tar\\.gz$' \
+        | head -n 1)"
+fi
+
+if [ -z "$DOWNLOAD_URL" ]; then
+    echo "Error: no downloadable tar.gz release asset found at https://github.com/$REPO/releases"
+    echo "Available assets:"
+    awk -F '"' '/browser_download_url/ {print "  - " $4}' "$RELEASE_JSON"
     exit 1
 fi
 
 ARCHIVE_NAME="$(basename "$DOWNLOAD_URL")"
-VERSION="${ARCHIVE_NAME#inkdash-}"
-VERSION="${VERSION%-raspi-arm64.tar.gz}"
+VERSION="${RELEASE_TAG:-$ARCHIVE_NAME}"
 echo "Installing inkdash $VERSION..."
 
 # ── 2. Download and extract ────────────────────────────────────────────────────
@@ -37,6 +64,7 @@ fi
 
 TMP=$(mktemp -d)
 cleanup() {
+    rm -f "$RELEASE_JSON"
     rm -rf "$TMP"
     if [ ! -d "$INSTALL_DIR" ] && [ -d "${INSTALL_DIR}.backup" ]; then
         mv "${INSTALL_DIR}.backup" "$INSTALL_DIR"
@@ -48,7 +76,22 @@ trap cleanup EXIT
 curl -fsSL "$DOWNLOAD_URL" -o "$TMP/inkdash.tar.gz"
 mkdir -p "$INSTALL_DIR"
 tar -xzf "$TMP/inkdash.tar.gz" -C "$INSTALL_DIR" --strip-components=1
-chmod +x "$BINARY"
+
+if [ -x "$BINARY" ]; then
+    chmod +x "$BINARY"
+elif [ -x "$INSTALL_DIR/bin/inkdash-zig" ]; then
+    BINARY="$INSTALL_DIR/bin/inkdash-zig"
+    chmod +x "$BINARY"
+else
+    BINARY_CANDIDATE="$(find "$INSTALL_DIR/bin" -maxdepth 1 -type f -perm /111 2>/dev/null | head -n 1)"
+    if [ -n "$BINARY_CANDIDATE" ]; then
+        BINARY="$BINARY_CANDIDATE"
+        chmod +x "$BINARY"
+    else
+        echo "Error: no executable found in $INSTALL_DIR/bin"
+        exit 1
+    fi
+fi
 
 rm -rf "${INSTALL_DIR}.backup"
 
