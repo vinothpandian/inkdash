@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-set -euo pipefail
+set -eu
 
 PATH_TO_ZERO_NATIVE=${1:-${ZN_PATH:-}}
 if [ -z "$PATH_TO_ZERO_NATIVE" ]; then
