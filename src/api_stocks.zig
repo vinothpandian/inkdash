@@ -1,10 +1,12 @@
 const std = @import("std");
 const zero_native = @import("zero-native");
 const bridge = zero_native.bridge;
+const app_log = @import("app_log.zig");
 const config_mod = @import("config.zig");
 const http = @import("http_client.zig");
 
 const YAHOO_BASE = "https://query1.finance.yahoo.com/v8/finance/chart";
+const log = std.log.scoped(.stocks);
 
 const ThreadArgs = struct {
     io: std.Io,
@@ -34,29 +36,53 @@ const StockItem = struct {
     name: []const u8,
     price: f64,
     change: f64,
-    @"changePercent": f64,
+    changePercent: f64,
     currency: []const u8,
-    @"sparklineData": []const f64,
+    sparklineData: []const f64,
     priceHint: i64,
-    @"lastUpdated": []const u8,
+    lastUpdated: []const u8,
 };
+
+fn deinitStockItem(allocator: std.mem.Allocator, item: StockItem) void {
+    allocator.free(item.ticker);
+    allocator.free(item.name);
+    allocator.free(item.sparklineData);
+}
 
 fn fetchSingleStock(
     io: std.Io,
     allocator: std.mem.Allocator,
+    env_map: *const std.process.Environ.Map,
     ticker: []const u8,
     last_updated: []const u8,
 ) !StockItem {
-    const url = try std.fmt.allocPrint(allocator,
-        "{s}/{s}?interval=1d&range=1mo", .{ YAHOO_BASE, ticker });
+    const url = try std.fmt.allocPrint(allocator, "{s}/{s}?interval=1d&range=1mo", .{ YAHOO_BASE, ticker });
     defer allocator.free(url);
 
+    log.info("fetch start ticker={s}", .{ticker});
+    app_log.info(io, env_map, "stocks.fetch.start", null, &.{app_log.trace.string("ticker", ticker)});
     const headers = [_]std.http.Header{
         .{ .name = "User-Agent", .value = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" },
     };
     const body = try http.get(io, allocator, url, &headers);
     defer allocator.free(body);
+    log.info("fetch response ticker={s} bytes={d}", .{ ticker, body.len });
+    app_log.info(io, env_map, "stocks.fetch.response", null, &.{
+        app_log.trace.string("ticker", ticker),
+        app_log.trace.uint("bytes", body.len),
+    });
 
+    return try parseStockItem(io, env_map, allocator, ticker, last_updated, body);
+}
+
+fn parseStockItem(
+    io: std.Io,
+    env_map: *const std.process.Environ.Map,
+    allocator: std.mem.Allocator,
+    ticker: []const u8,
+    last_updated: []const u8,
+    body: []const u8,
+) !StockItem {
     const parsed = try std.json.parseFromSlice(std.json.Value, allocator, body, .{});
     defer parsed.deinit();
 
@@ -78,6 +104,12 @@ fn fetchSingleStock(
     const indicators = result.get("indicators").?.object;
     const quote = indicators.get("quote").?.array.items[0].object;
     const close_arr = quote.get("close").?.array.items;
+    log.info("parse data ticker={s} name={s} closes={d}", .{ ticker, short_name, close_arr.len });
+    app_log.info(io, env_map, "stocks.parse.data", null, &.{
+        app_log.trace.string("ticker", ticker),
+        app_log.trace.string("name", short_name),
+        app_log.trace.uint("closes", close_arr.len),
+    });
 
     var close_prices: std.ArrayList(f64) = .empty;
     defer close_prices.deinit(allocator);
@@ -90,18 +122,23 @@ fn fetchSingleStock(
     const change = price - previous;
     const change_pct = if (previous > 0.0) (change / previous) * 100.0 else 0.0;
     const currency_symbol = getCurrencySymbol(currency_str);
+    const owned_ticker = try allocator.dupe(u8, ticker);
+    errdefer allocator.free(owned_ticker);
+    const owned_name = try allocator.dupe(u8, short_name);
+    errdefer allocator.free(owned_name);
     const sparkline_data = try allocator.dupe(f64, close_prices.items[start..]);
+    errdefer allocator.free(sparkline_data);
 
     const item = StockItem{
-        .ticker = ticker,
-        .name = short_name,
+        .ticker = owned_ticker,
+        .name = owned_name,
         .price = price,
         .change = change,
-        .@"changePercent" = change_pct,
+        .changePercent = change_pct,
         .currency = currency_symbol,
-        .@"sparklineData" = sparkline_data,
+        .sparklineData = sparkline_data,
         .priceHint = price_hint,
-        .@"lastUpdated" = last_updated,
+        .lastUpdated = last_updated,
     };
     return item;
 }
@@ -110,12 +147,21 @@ fn fetchStocksThread(args_ptr: *ThreadArgs) void {
     defer args_ptr.allocator.destroy(args_ptr);
     const args = args_ptr;
 
+    log.info("request start id={s}", .{args.id()});
+    app_log.info(args.io, args.env_map, "stocks.request.start", null, &.{app_log.trace.string("request_id", args.id())});
     const body = doFetch(args) catch |err| {
+        log.err("request failed id={s} error={s}", .{ args.id(), @errorName(err) });
+        app_log.err(args.io, args.env_map, "stocks.request.failed", @errorName(err), &.{app_log.trace.string("request_id", args.id())});
         args.responder.fail(args.id(), .handler_failed, @errorName(err)) catch {};
         return;
     };
     defer args.allocator.free(body);
     args.responder.success(args.id(), body) catch {};
+    log.info("request success id={s} bytes={d}", .{ args.id(), body.len });
+    app_log.info(args.io, args.env_map, "stocks.request.success", null, &.{
+        app_log.trace.string("request_id", args.id()),
+        app_log.trace.uint("bytes", body.len),
+    });
 }
 
 fn doFetch(args: *ThreadArgs) ![]u8 {
@@ -128,20 +174,38 @@ fn doFetch(args: *ThreadArgs) ![]u8 {
     var result: std.ArrayList(StockItem) = .empty;
     defer result.deinit(allocator);
 
+    var failed: usize = 0;
     for (cfg.stocks.tickers) |ticker| {
-        const item = fetchSingleStock(args.io, allocator, ticker, last_updated) catch continue;
+        const item = fetchSingleStock(args.io, allocator, args.env_map, ticker, last_updated) catch |err| {
+            failed += 1;
+            log.warn("ticker skipped ticker={s} error={s}", .{ ticker, @errorName(err) });
+            app_log.warn(args.io, args.env_map, "stocks.ticker.skipped", @errorName(err), &.{app_log.trace.string("ticker", ticker)});
+            continue;
+        };
         try result.append(allocator, item);
     }
 
     defer {
         for (result.items) |item| {
-            allocator.free(item.@"sparklineData");
+            deinitStockItem(allocator, item);
         }
     }
 
     var json_buf = std.Io.Writer.Allocating.init(allocator);
     defer json_buf.deinit();
     try std.json.Stringify.value(result.items, .{}, &json_buf.writer);
+    log.info("request complete tickers={d} fetched={d} failed={d} json_bytes={d}", .{
+        cfg.stocks.tickers.len,
+        result.items.len,
+        failed,
+        json_buf.writer.buffered().len,
+    });
+    app_log.info(args.io, args.env_map, "stocks.request.complete", null, &.{
+        app_log.trace.uint("tickers", cfg.stocks.tickers.len),
+        app_log.trace.uint("fetched", result.items.len),
+        app_log.trace.uint("failed", failed),
+        app_log.trace.uint("json_bytes", json_buf.writer.buffered().len),
+    });
 
     return allocator.dupe(u8, json_buf.writer.buffered());
 }
@@ -169,3 +233,41 @@ pub const HandlerContext = struct {
     allocator: std.mem.Allocator,
     env_map: *const std.process.Environ.Map,
 };
+
+test "stock item owns strings after parsed JSON is deinitialized" {
+    const allocator = std.testing.allocator;
+    const body =
+        \\{
+        \\  "chart": {
+        \\    "result": [{
+        \\      "meta": {
+        \\        "regularMarketPrice": 105.5,
+        \\        "chartPreviousClose": 100.0,
+        \\        "currency": "USD",
+        \\        "shortName": "Test Holding",
+        \\        "priceHint": 2
+        \\      },
+        \\      "indicators": {
+        \\        "quote": [{
+        \\          "close": [100.0, null, 101.0, 105.5]
+        \\        }]
+        \\      }
+        \\    }]
+        \\  }
+        \\}
+    ;
+
+    var env_map = std.process.Environ.Map.init(allocator);
+    defer env_map.deinit();
+
+    const item = try parseStockItem(.{}, &env_map, allocator, "TEST", "1779129014", body);
+    defer deinitStockItem(allocator, item);
+
+    var json_buf = std.Io.Writer.Allocating.init(allocator);
+    defer json_buf.deinit();
+    try std.json.Stringify.value(&.{item}, .{}, &json_buf.writer);
+
+    const json = json_buf.writer.buffered();
+    try std.testing.expect(std.mem.indexOf(u8, json, "\"ticker\":\"TEST\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, json, "\"name\":\"Test Holding\"") != null);
+}

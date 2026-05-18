@@ -1,6 +1,7 @@
 const std = @import("std");
 const zero_native = @import("zero-native");
 const bridge = zero_native.bridge;
+const app_log = @import("app_log.zig");
 const config_mod = @import("config.zig");
 const http = @import("http_client.zig");
 
@@ -37,11 +38,17 @@ fn fetchWeatherThread(args_ptr: *ThreadArgs) void {
     defer args_ptr.allocator.destroy(args_ptr);
     const args = args_ptr;
 
+    app_log.info(args.io, args.env_map, "weather.request.start", null, &.{app_log.trace.string("request_id", args.id())});
     const body = doFetch(args) catch |err| {
+        app_log.err(args.io, args.env_map, "weather.request.failed", @errorName(err), &.{app_log.trace.string("request_id", args.id())});
         args.responder.fail(args.id(), .handler_failed, @errorName(err)) catch {};
         return;
     };
     args.responder.success(args.id(), body) catch {};
+    app_log.info(args.io, args.env_map, "weather.request.success", null, &.{
+        app_log.trace.string("request_id", args.id()),
+        app_log.trace.uint("bytes", body.len),
+    });
     args.allocator.free(body);
 }
 
@@ -56,13 +63,12 @@ fn doFetch(args: *ThreadArgs) ![]u8 {
     const tz_encoded = try http.urlEncode(allocator, cfg.weather.timezone);
     defer allocator.free(tz_encoded);
 
-    const url = try std.fmt.allocPrint(allocator,
-        "{s}?latitude={s}&longitude={s}&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m&hourly=temperature_2m,weather_code&daily=sunrise,sunset&timezone={s}&forecast_days=1",
-        .{ OPEN_METEO_BASE, lat_str, lon_str, tz_encoded });
+    const url = try std.fmt.allocPrint(allocator, "{s}?latitude={s}&longitude={s}&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m&hourly=temperature_2m,weather_code&daily=sunrise,sunset&timezone={s}&forecast_days=1", .{ OPEN_METEO_BASE, lat_str, lon_str, tz_encoded });
     defer allocator.free(url);
 
     const body = try http.get(args.io, allocator, url, &.{});
     defer allocator.free(body);
+    app_log.info(args.io, args.env_map, "weather.fetch.response", null, &.{app_log.trace.uint("bytes", body.len)});
 
     const parsed = try std.json.parseFromSlice(std.json.Value, allocator, body, .{});
     defer parsed.deinit();
@@ -117,19 +123,24 @@ fn doFetch(args: *ThreadArgs) ![]u8 {
         },
         .condition = condition,
         .temperature = @as(i64, @intFromFloat(@round(temp))),
-        .@"feelsLike" = @as(i64, @intFromFloat(@round(feels_like))),
+        .feelsLike = @as(i64, @intFromFloat(@round(feels_like))),
         .humidity = humidity,
-        .@"windSpeed" = @as(i64, @intFromFloat(@round(wind))),
+        .windSpeed = @as(i64, @intFromFloat(@round(wind))),
         .unit = "celsius",
         .sunrise = sunrise,
         .sunset = sunset,
-        .@"hourlyForecast" = hourly_forecast.items,
-        .@"lastUpdated" = last_updated,
+        .hourlyForecast = hourly_forecast.items,
+        .lastUpdated = last_updated,
     };
 
     var json_buf = std.Io.Writer.Allocating.init(allocator);
     defer json_buf.deinit();
     try std.json.Stringify.value(response, .{}, &json_buf.writer);
+    app_log.info(args.io, args.env_map, "weather.request.complete", null, &.{
+        app_log.trace.int("temperature", @as(i64, @intFromFloat(@round(temp)))),
+        app_log.trace.uint("hourly_points", hourly_forecast.items.len),
+        app_log.trace.uint("json_bytes", json_buf.writer.buffered().len),
+    });
 
     return allocator.dupe(u8, json_buf.writer.buffered());
 }

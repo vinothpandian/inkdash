@@ -2,6 +2,7 @@ const std = @import("std");
 const runner = @import("runner");
 const zero_native = @import("zero-native");
 
+const app_log = @import("app_log.zig");
 const config_mod = @import("config.zig");
 const timeline_mod = @import("timeline.zig");
 const api_weather = @import("api_weather.zig");
@@ -40,21 +41,25 @@ const App = struct {
         _ = invocation;
         _ = output;
         const self: *App = @ptrCast(@alignCast(context));
+        errdefer |err| app_log.err(self.io, self.env_map, "bridge.get_config.failed", @errorName(err), &.{});
         const cfg = try config_mod.loadConfig(self.io, self.allocator, self.env_map);
         var json_buf = std.Io.Writer.Allocating.init(self.allocator);
         defer json_buf.deinit();
         try std.json.Stringify.value(cfg, .{}, &json_buf.writer);
+        app_log.info(self.io, self.env_map, "bridge.get_config.success", null, &.{app_log.trace.uint("bytes", json_buf.writer.buffered().len)});
         return self.allocator.dupe(u8, json_buf.writer.buffered());
     }
 
     fn handleSaveConfig(context: *anyopaque, invocation: bridge.Invocation, output: []u8) anyerror![]const u8 {
         _ = output;
         const self: *App = @ptrCast(@alignCast(context));
+        errdefer |err| app_log.err(self.io, self.env_map, "bridge.save_config.failed", @errorName(err), &.{app_log.trace.uint("payload_bytes", invocation.request.payload.len)});
         const parsed = try std.json.parseFromSlice(config_mod.AppConfig, self.allocator, invocation.request.payload, .{
             .ignore_unknown_fields = true,
         });
         defer parsed.deinit();
         try config_mod.saveConfig(self.io, self.allocator, self.env_map, parsed.value);
+        app_log.info(self.io, self.env_map, "bridge.save_config.success", null, &.{app_log.trace.uint("payload_bytes", invocation.request.payload.len)});
         return "null";
     }
 
@@ -63,6 +68,7 @@ const App = struct {
         _ = output;
         const self: *App = @ptrCast(@alignCast(context));
         const allocator = self.allocator;
+        errdefer |err| app_log.err(self.io, self.env_map, "bridge.get_timeline.failed", @errorName(err), &.{});
         const timeline = try timeline_mod.getTimelineForToday(self.io, allocator, self.env_map);
         defer timeline_mod.deinitTimelineResponse(allocator, timeline);
 
@@ -74,6 +80,10 @@ const App = struct {
             .events = timeline.events,
         };
         try std.json.Stringify.value(response, .{}, &json_buf.writer);
+        app_log.info(self.io, self.env_map, "bridge.get_timeline.success", null, &.{
+            app_log.trace.uint("events", timeline.events.len),
+            app_log.trace.uint("bytes", json_buf.writer.buffered().len),
+        });
 
         return allocator.dupe(u8, json_buf.writer.buffered());
     }
@@ -112,6 +122,7 @@ pub fn main(init: std.process.Init) !void {
         .{ .name = "app.fetch_stocks", .context = &app_state.stocks_ctx, .invoke_fn = api_stocks.handler },
     };
 
+    app_log.info(init.io, init.environ_map, "app.main.start", "starting application", &.{});
     const dispatcher = zero_native.BridgeDispatcher{
         .policy = .{
             .enabled = true,
@@ -121,7 +132,7 @@ pub fn main(init: std.process.Init) !void {
         .async_registry = .{ .handlers = &async_handlers },
     };
 
-    try runner.runWithOptions(app_state.app(), .{
+    runner.runWithOptions(app_state.app(), .{
         .app_name = "Inkdash",
         .window_title = "Inkdash",
         .bundle_id = "com.inkdash.app",
@@ -131,7 +142,11 @@ pub fn main(init: std.process.Init) !void {
         .security = .{
             .navigation = .{ .allowed_origins = &dev_origins },
         },
-    }, init);
+    }, init) catch |err| {
+        app_log.fatal(init.io, init.environ_map, "app.main.failed", @errorName(err), &.{});
+        return err;
+    };
+    app_log.info(init.io, init.environ_map, "app.main.stop", "application stopped", &.{});
 }
 
 test "app bridge policies are non-empty" {
@@ -145,6 +160,7 @@ test "app bridge policies are non-empty" {
 }
 
 test {
+    _ = @import("app_log.zig");
     _ = @import("config.zig");
     _ = @import("timeline.zig");
     _ = @import("http_client.zig");
