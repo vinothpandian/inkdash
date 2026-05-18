@@ -78,7 +78,7 @@ Copied verbatim (except import patches):
 - [ ] **Step 1: Copy all frontend source files**
 
 ```bash
-# Run from inkdash-zig root
+# Run from inkdash root
 cp -r ../inkdash/src/* ./frontend/src/
 ```
 

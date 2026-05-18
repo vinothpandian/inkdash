@@ -26,7 +26,7 @@ const PackageTarget = enum {
     linux,
 };
 
-const app_exe_name = "inkdash-zig";
+const app_exe_name = "inkdash";
 
 pub fn build(b: *std.Build) void {
     const target = zeroNativeTarget(b);

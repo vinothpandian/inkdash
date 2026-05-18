@@ -7,7 +7,7 @@ if [ -z "$PACKAGE_DIR" ] || [ ! -d "$PACKAGE_DIR" ]; then
   exit 1
 fi
 
-BIN=$(find "$PACKAGE_DIR" -type f -perm -111 \( -name 'inkdash' -o -name 'inkdash-zig' \) | head -n 1)
+BIN=$(find "$PACKAGE_DIR" -type f -perm -111 -name 'inkdash' | head -n 1)
 if [ -z "$BIN" ]; then
   echo "inkdash executable not found in $PACKAGE_DIR" >&2
   exit 1

@@ -82,9 +82,6 @@ tar -xzf "$TMP/inkdash.tar.gz" -C "$INSTALL_DIR" --strip-components=1
 
 if [ -x "$BINARY" ]; then
     chmod +x "$BINARY"
-elif [ -x "$INSTALL_DIR/bin/inkdash-zig" ]; then
-    BINARY="$INSTALL_DIR/bin/inkdash-zig"
-    chmod +x "$BINARY"
 else
     BINARY_CANDIDATE="$(find "$INSTALL_DIR/bin" -maxdepth 1 -type f -perm /111 2>/dev/null | head -n 1)"
     if [ -n "$BINARY_CANDIDATE" ]; then
