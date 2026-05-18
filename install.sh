@@ -5,9 +5,9 @@
 
 set -e
 
-REPO="vinothpandian/inkdash-zig"
+REPO="vinothpandian/inkdash"
 INSTALL_DIR="$HOME/Applications/inkdash"
-BINARY="$INSTALL_DIR/inkdash-zig"
+BINARY="$INSTALL_DIR/bin/inkdash"
 SERVICE_NAME="inkdash"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 DESKTOP_FILE="$HOME/.local/share/applications/${SERVICE_NAME}.desktop"
@@ -17,15 +17,16 @@ DESKTOP_FILE="$HOME/.local/share/applications/${SERVICE_NAME}.desktop"
 echo "Fetching latest inkdash release..."
 
 DOWNLOAD_URL=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
-    | grep "browser_download_url.*raspi-arm64\.tar\.gz" \
-    | cut -d '"' -f 4)
+    | awk -F '"' '/browser_download_url/ && /raspi-arm64\.tar\.gz/ { print $4; exit }')
 
 if [ -z "$DOWNLOAD_URL" ]; then
     echo "Error: no ARM64 release found at https://github.com/$REPO/releases"
     exit 1
 fi
 
-VERSION=$(echo "$DOWNLOAD_URL" | grep -oP 'inkdash-\Kv[^-]+(?=-raspi)')
+ARCHIVE_NAME="$(basename "$DOWNLOAD_URL")"
+VERSION="${ARCHIVE_NAME#inkdash-}"
+VERSION="${VERSION%-raspi-arm64.tar.gz}"
 echo "Installing inkdash $VERSION..."
 
 # ── 2. Download and extract ────────────────────────────────────────────────────
