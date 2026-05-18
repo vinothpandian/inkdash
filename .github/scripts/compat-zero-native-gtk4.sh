@@ -33,6 +33,14 @@ EOF0
   mv "$TMP_URI" "$FILE"
 fi
 
+if grep -q "gtk_window_set_default_size(win->gtk_window, (int)width, (int)height);" "$FILE" &&
+   ! grep -q "gtk_window_fullscreen(win->gtk_window);" "$FILE"; then
+  TMP_FULLSCREEN="$FILE.fullscreen"
+  sed '/gtk_window_set_default_size(win->gtk_window, (int)width, (int)height);/a\
+    gtk_window_fullscreen(win->gtk_window);' "$FILE" > "$TMP_FULLSCREEN"
+  mv "$TMP_FULLSCREEN" "$FILE"
+fi
+
 START=$(grep -n "^typedef struct zero_native_file_dialog_state" "$FILE" | head -n 1 | cut -d: -f1 || true)
 END=$(grep -n "^typedef struct zero_native_alert_state" "$FILE" | head -n 1 | cut -d: -f1 || true)
 if [ -z "$START" ] || [ -z "$END" ]; then

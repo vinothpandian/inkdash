@@ -197,11 +197,13 @@ Wants=graphical.target
 [Service]
 Type=simple
 User=$USER
+WorkingDirectory=$INSTALL_DIR/resources
 ExecStart=$BINARY
 Restart=on-failure
 RestartSec=5
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=$HOME/.Xauthority
+Environment=NO_AT_BRIDGE=1
 
 [Install]
 WantedBy=graphical.target
