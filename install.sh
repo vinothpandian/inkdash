@@ -199,6 +199,7 @@ Type=simple
 User=$USER
 WorkingDirectory=$INSTALL_DIR/resources
 ExecStart=$BINARY
+ExecStartPost=/bin/sh -c 'sleep 2; command -v wmctrl >/dev/null 2>&1 && wmctrl -r Inkdash -b add,fullscreen || true'
 Restart=on-failure
 RestartSec=5
 Environment=DISPLAY=:0

@@ -33,30 +33,6 @@ EOF0
   mv "$TMP_URI" "$FILE"
 fi
 
-if grep -q "gtk_window_present(win->gtk_window);" "$FILE" &&
-   ! grep -q "zero_native_fullscreen_later" "$FILE"; then
-  TMP_FULLSCREEN="$FILE.fullscreen"
-  awk '
-    {
-      if (!helper_done && index($0, "static void on_activate(GtkApplication *app, gpointer data)") > 0) {
-        print "static gboolean zero_native_fullscreen_later(gpointer data) {"
-        print "    GtkWindow *window = GTK_WINDOW(data);"
-        print "    if (window) gtk_window_fullscreen(window);"
-        print "    return G_SOURCE_REMOVE;"
-        print "}"
-        print ""
-        helper_done = 1
-      }
-      print
-      if (!done && index($0, "gtk_window_present(win->gtk_window);") > 0) {
-        print "    g_idle_add(zero_native_fullscreen_later, win->gtk_window);"
-        done = 1
-      }
-    }
-  ' "$FILE" > "$TMP_FULLSCREEN"
-  mv "$TMP_FULLSCREEN" "$FILE"
-fi
-
 START=$(grep -n "^typedef struct zero_native_file_dialog_state" "$FILE" | head -n 1 | cut -d: -f1 || true)
 END=$(grep -n "^typedef struct zero_native_alert_state" "$FILE" | head -n 1 | cut -d: -f1 || true)
 if [ -z "$START" ] || [ -z "$END" ]; then
