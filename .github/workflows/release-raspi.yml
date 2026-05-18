@@ -25,6 +25,8 @@ jobs:
             ca-certificates \
             curl \
             git \
+            file \
+            binutils \
             libglib2.0-dev \
             libgdk-pixbuf-2.0-dev \
             libgraphene-1.0-dev \
@@ -71,6 +73,7 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME:-dev}"
           PKG=$(find zig-out/package -maxdepth 1 -mindepth 1 -type d | head -1)
+          .github/scripts/verify-raspi-package.sh "$PKG"
           tar -czf "inkdash-${VERSION}-raspi-arm64.tar.gz" -C zig-out/package "$(basename "$PKG")"
           echo "TARBALL=inkdash-${VERSION}-raspi-arm64.tar.gz" >> $GITHUB_ENV
 

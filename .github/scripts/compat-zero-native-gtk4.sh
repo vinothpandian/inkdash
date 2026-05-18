@@ -13,20 +13,13 @@ if [ ! -f "$FILE" ]; then
   exit 0
 fi
 
-URI_START=$(grep -n "^static void zero_native_uri_launch_done" "$FILE" | head -n 1 | cut -d: -f1 || true)
+URI_START=$(grep -n "^#if GTK_CHECK_VERSION(4, 10, 0)" "$FILE" | head -n 1 | cut -d: -f1 || true)
 URI_END=$(grep -n "^static gboolean on_decide_policy" "$FILE" | head -n 1 | cut -d: -f1 || true)
 if [ -n "$URI_START" ] && [ -n "$URI_END" ] && [ "$URI_START" -lt "$URI_END" ]; then
   TMP_URI="$FILE.uricompat"
   {
     sed -n "1,$((URI_START-1))p" "$FILE"
     cat <<'EOF0'
-
-static void zero_native_uri_launch_done(GObject *source_object, GAsyncResult *result, gpointer data) {
-    (void)source_object;
-    (void)result;
-    (void)data;
-    g_warning("zero-native GTK URI launcher fallback path: external link opened via gtk_show_uri()");
-}
 
 static void zero_native_open_external_uri(GtkWindow *parent, const char *uri) {
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS
