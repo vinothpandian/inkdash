@@ -4,13 +4,30 @@ import { Sun, Moon, RotateCcw } from 'lucide-react';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useTheme, type ThemeMode } from '@/hooks/useTheme';
 import { useWeather } from '@/hooks/useWeather';
+import { usePixelShift, type PixelShiftConfig } from '@/hooks/usePixelShift';
+import { useIdleDim, type IdleDimConfig } from '@/hooks/useIdleDim';
 import { ConfigProvider, useTimeline } from '@/context/ConfigContext';
 import { OverviewPage } from '@/components/pages/OverviewPage';
 import { StocksPage } from '@/components/pages/StocksPage';
 
+type AntiBurnInConfig = PixelShiftConfig & IdleDimConfig;
+
+// Conservative defaults, mirroring src/config.zig, used until get_config resolves.
+const DEFAULT_ANTI_BURN_IN: AntiBurnInConfig = {
+  pixel_shift_enabled: true,
+  pixel_shift_amplitude_px: 4,
+  pixel_shift_interval_ms: 45_000,
+  pixel_shift_transition_ms: 8_000,
+  idle_dim_enabled: true,
+  idle_dim_timeout_ms: 600_000,
+  idle_dim_opacity: 0.12,
+  idle_dim_fade_ms: 4_000,
+};
+
 interface DisplayConfig {
   fullscreen: boolean;
   theme_mode: ThemeMode;
+  anti_burn_in: AntiBurnInConfig;
 }
 
 interface AppConfig {
@@ -38,15 +55,21 @@ function DashboardContent() {
   const { isLoading: isReloading, reloadConfig } = useTimeline();
   // Fetch config for theme mode
   const [themeMode, setThemeMode] = useState<ThemeMode>('auto_sun');
+  const [antiBurnIn, setAntiBurnIn] = useState<AntiBurnInConfig>(DEFAULT_ANTI_BURN_IN);
   useEffect(() => {
     invoke<AppConfig>('get_config')
       .then((config) => {
         setThemeMode(config.display.theme_mode);
+        setAntiBurnIn(config.display.anti_burn_in);
       })
       .catch((err) => {
         console.error('Failed to load config:', err);
       });
   }, []);
+
+  // Anti-burn-in: subtle pixel drift + idle dimming for always-on displays
+  const pixelShift = usePixelShift(antiBurnIn);
+  const isIdle = useIdleDim(antiBurnIn);
 
   // Fetch weather data for sunrise/sunset times
   const { data: weatherData } = useWeather();
@@ -168,104 +191,131 @@ function DashboardContent() {
       onTouchMove={handlers.onTouchMove}
       onTouchEnd={handlers.onTouchEnd}
     >
-      {/* Pages Container */}
+      {/*
+        Anti-burn-in drift wrapper: sized larger than the viewport by the
+        shift amplitude on every side and translated within that margin, so
+        the drift never exposes an edge gap.
+      */}
       <div
-        className="flex h-full"
         style={{
-          transform: `translateX(${translateX})`,
-          transition: isSwiping ? 'none' : 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1)',
-          width: `${PAGES.length * 100}vw`,
+          position: 'absolute',
+          top: -antiBurnIn.pixel_shift_amplitude_px,
+          left: -antiBurnIn.pixel_shift_amplitude_px,
+          width: `calc(100% + ${antiBurnIn.pixel_shift_amplitude_px * 2}px)`,
+          height: `calc(100% + ${antiBurnIn.pixel_shift_amplitude_px * 2}px)`,
+          transform: `translate(${pixelShift.x}px, ${pixelShift.y}px)`,
+          transition: `transform ${antiBurnIn.pixel_shift_transition_ms}ms ease-in-out`,
         }}
       >
-        {PAGES.map(({ id, component: PageComponent }) => (
-          <div
-            key={id}
-            className="h-full w-screen flex-shrink-0"
-          >
-            <PageComponent />
+        {/* Pages Container */}
+        <div
+          className="flex h-full"
+          style={{
+            transform: `translateX(${translateX})`,
+            transition: isSwiping ? 'none' : 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1)',
+            width: `${PAGES.length * 100}vw`,
+          }}
+        >
+          {PAGES.map(({ id, component: PageComponent }) => (
+            <div
+              key={id}
+              className="h-full w-screen flex-shrink-0"
+            >
+              <PageComponent />
+            </div>
+          ))}
+        </div>
+
+        {/* Floating Dock Navigation */}
+        <div
+          className={`
+            fixed bottom-6 left-1/2 -translate-x-1/2
+            z-[9999]
+            transition-all duration-300 ease-out
+            ${showDock
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-4 pointer-events-none'}
+          `}
+          onMouseEnter={handleDockEnter}
+          onMouseLeave={handleDockLeave}
+        >
+          <div className="floating-dock flex items-center gap-1 px-2 py-2">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-accent-warm/20 transition-colors duration-200"
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDark ? 'Light mode' : 'Dark mode'}
+            >
+              {isDark ? (
+                <Sun className="w-4 h-4 text-accent-warm" />
+              ) : (
+                <Moon className="w-4 h-4 text-dock-inactive hover:text-dock-active transition-colors" />
+              )}
+            </button>
+
+            {/* Divider */}
+            <div className="w-px h-5 bg-border mx-1" />
+
+            {/* Page Navigation */}
+            {PAGES.map((page, index) => {
+              const isActive = index === currentPage;
+              return (
+                <button
+                  key={page.id}
+                  onClick={() => navigateToPage(index)}
+                  className={`
+                    relative flex items-center justify-center
+                    transition-all duration-200 ease-out
+                    ${isActive
+                      ? 'w-auto px-4 py-2'
+                      : 'w-10 h-10'}
+                  `}
+                  aria-label={`Go to ${page.label}`}
+                  title={page.label}
+                >
+                  {/* Dot or expanded state */}
+                  {isActive ? (
+                    <span className="text-sm font-medium-labels text-accent-warm whitespace-nowrap">
+                      {page.label}
+                    </span>
+                  ) : (
+                    <span
+                      className="w-2 h-2 rounded-full bg-dock-inactive hover:bg-dock-active transition-colors duration-200"
+                    />
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Divider */}
+            <div className="w-px h-5 bg-border mx-1" />
+
+            {/* Reload Config Button */}
+            <button
+              onClick={reloadConfig}
+              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-accent-warm/20 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Reload config"
+              title="Reload config"
+              disabled={isReloading}
+            >
+              <RotateCcw
+                className={`w-4 h-4 text-dock-inactive transition-colors ${isReloading ? 'animate-spin' : 'hover:text-dock-active'}`}
+              />
+            </button>
           </div>
-        ))}
-      </div>
-
-      {/* Floating Dock Navigation */}
-      <div
-        className={`
-          fixed bottom-6 left-1/2 -translate-x-1/2
-          z-[9999]
-          transition-all duration-300 ease-out
-          ${showDock
-            ? 'opacity-100 translate-y-0'
-            : 'opacity-0 translate-y-4 pointer-events-none'}
-        `}
-        onMouseEnter={handleDockEnter}
-        onMouseLeave={handleDockLeave}
-      >
-        <div className="floating-dock flex items-center gap-1 px-2 py-2">
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-accent-warm/20 transition-colors duration-200"
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            title={isDark ? 'Light mode' : 'Dark mode'}
-          >
-            {isDark ? (
-              <Sun className="w-4 h-4 text-accent-warm" />
-            ) : (
-              <Moon className="w-4 h-4 text-dock-inactive hover:text-dock-active transition-colors" />
-            )}
-          </button>
-
-          {/* Divider */}
-          <div className="w-px h-5 bg-border mx-1" />
-
-          {/* Page Navigation */}
-          {PAGES.map((page, index) => {
-            const isActive = index === currentPage;
-            return (
-              <button
-                key={page.id}
-                onClick={() => navigateToPage(index)}
-                className={`
-                  relative flex items-center justify-center
-                  transition-all duration-200 ease-out
-                  ${isActive
-                    ? 'w-auto px-4 py-2'
-                    : 'w-10 h-10'}
-                `}
-                aria-label={`Go to ${page.label}`}
-                title={page.label}
-              >
-                {/* Dot or expanded state */}
-                {isActive ? (
-                  <span className="text-sm font-medium-labels text-accent-warm whitespace-nowrap">
-                    {page.label}
-                  </span>
-                ) : (
-                  <span
-                    className="w-2 h-2 rounded-full bg-dock-inactive hover:bg-dock-active transition-colors duration-200"
-                  />
-                )}
-              </button>
-            );
-          })}
-
-          {/* Divider */}
-          <div className="w-px h-5 bg-border mx-1" />
-
-          {/* Reload Config Button */}
-          <button
-            onClick={reloadConfig}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-accent-warm/20 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Reload config"
-            title="Reload config"
-            disabled={isReloading}
-          >
-            <RotateCcw
-              className={`w-4 h-4 text-dock-inactive transition-colors ${isReloading ? 'animate-spin' : 'hover:text-dock-active'}`}
-            />
-          </button>
         </div>
       </div>
+
+      {/* Idle dim overlay: subtle brightness reduction after inactivity */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-40 bg-black"
+        style={{
+          opacity: isIdle ? antiBurnIn.idle_dim_opacity : 0,
+          transition: `opacity ${antiBurnIn.idle_dim_fade_ms}ms ease-in-out`,
+        }}
+      />
     </div>
   );
 }
