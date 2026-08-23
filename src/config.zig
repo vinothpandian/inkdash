@@ -36,9 +36,31 @@ pub const TimezonesConfig = struct {
     },
 };
 
+pub const AntiBurnInConfig = struct {
+    /// Slowly drifts the whole UI a few pixels so no pixel stays lit in the
+    /// exact same spot for hours (LED/OLED burn-in mitigation).
+    pixel_shift_enabled: bool = true,
+    /// Max drift distance from center, in pixels. Keep small (2-6px) so the
+    /// motion stays imperceptible.
+    pixel_shift_amplitude_px: f64 = 4,
+    /// How often (ms) to pick a new drift position.
+    pixel_shift_interval_ms: u32 = 45_000,
+    /// Transition duration (ms) for each drift move.
+    pixel_shift_transition_ms: u32 = 8_000,
+    /// Dims the UI after a period of no interaction.
+    idle_dim_enabled: bool = true,
+    /// How long (ms) with no mouse/touch/keyboard activity before dimming.
+    idle_dim_timeout_ms: u32 = 600_000,
+    /// Overlay opacity applied when idle (0-1). Keep this subtle.
+    idle_dim_opacity: f64 = 0.12,
+    /// Fade duration (ms) for dimming in/out.
+    idle_dim_fade_ms: u32 = 4_000,
+};
+
 pub const DisplayConfig = struct {
     fullscreen: bool = false,
     theme_mode: ThemeMode = .auto_sun,
+    anti_burn_in: AntiBurnInConfig = .{},
 };
 
 pub const AppConfig = struct {
@@ -137,6 +159,14 @@ test "default config has expected weather location" {
 test "default config has expected stock tickers" {
     const cfg = AppConfig.default();
     try std.testing.expect(cfg.stocks.tickers.len == 4);
+}
+
+test "default config has subtle anti-burn-in defaults" {
+    const cfg = AppConfig.default();
+    try std.testing.expect(cfg.display.anti_burn_in.pixel_shift_enabled);
+    try std.testing.expect(cfg.display.anti_burn_in.idle_dim_enabled);
+    try std.testing.expect(cfg.display.anti_burn_in.pixel_shift_amplitude_px <= 10);
+    try std.testing.expect(cfg.display.anti_burn_in.idle_dim_opacity <= 0.3);
 }
 
 test "config JSON round-trip preserves weather location" {
