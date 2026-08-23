@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 export interface IdleDimConfig {
   idle_dim_enabled: boolean;
   idle_dim_timeout_ms: number;
+  /** Consumed by the overlay that renders isIdle, not by this hook. */
+  idle_dim_opacity: number;
+  idle_dim_fade_ms: number;
 }
 
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'touchstart', 'keydown', 'wheel'] as const;
