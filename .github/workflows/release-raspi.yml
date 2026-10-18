@@ -84,11 +84,18 @@ jobs:
 
       - name: Create archive
         run: |
-          VERSION="${GITHUB_REF_NAME:-dev}"
+          VERSION=$(printf '%s' "${GITHUB_REF_NAME:-dev}" | tr -c 'A-Za-z0-9._-' '-')
           PKG=$(find zig-out/package -maxdepth 1 -mindepth 1 -type d | head -1)
           .github/scripts/verify-raspi-package.sh "$PKG"
           tar -czf "inkdash-${VERSION}-raspi-arm64.tar.gz" -C zig-out/package "$(basename "$PKG")"
           echo "TARBALL=inkdash-${VERSION}-raspi-arm64.tar.gz" >> $GITHUB_ENV
+
+      - name: Upload Raspberry Pi archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkdash-raspi-arm64
+          path: ${{ env.TARBALL }}
+          if-no-files-found: error
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
