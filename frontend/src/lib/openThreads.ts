@@ -31,7 +31,7 @@ export function projectOpenThreads(records: readonly RevisionRecord[], now: numb
     .map(t => {
       const openedAt = t.stretches[t.stretches.length - 1].startedAt;
       return { ...t, openedAt, elapsed: Math.max(0, now - openedAt), total: t.stretches.reduce((sum, s) => sum + Math.max(0, (s.endedAt ?? now) - s.startedAt), 0) };
-    }).sort((a, b) => a.openedAt - b.openedAt || a.id.localeCompare(b.id));
+    }).sort((a, b) => b.openedAt - a.openedAt || a.id.localeCompare(b.id));
 }
 
 export function formatElapsed(ms: number): string {

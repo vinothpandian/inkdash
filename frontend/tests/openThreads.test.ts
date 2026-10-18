@@ -11,9 +11,9 @@ describe('revision projection', () => {
   it('does not resurrect a thread whose latest revision is closed', () => {
     expect(projectOpenThreads([record(thread('a', 100)), record(thread('a', 100, 200))], 1000)).toEqual([]);
   });
-  it('sorts by oldest current open stretch and clamps future starts', () => {
+  it('sorts by newest current open stretch and clamps future starts', () => {
     expect(projectOpenThreads([record(thread('b', 900)), record(thread('a', 100)), record(thread('c', 2000))], 1000).map(t => [t.id, t.elapsed]))
-      .toEqual([['a', 900], ['b', 100], ['c', 0]]);
+      .toEqual([['c', 0], ['b', 100], ['a', 900]]);
   });
   it.each([null, { id: 'a', name: 'a', stretches: [] }, thread('a', NaN), { id: 'a', name: 'a', stretches: [{ startedAt: 200, endedAt: 100 }] }, { id: 'a', name: 'a', stretches: [{ startedAt: 1 }, { startedAt: 2 }] }])('rejects invalid revisions without silently showing old state', payload => {
     expect(() => projectOpenThreads([record(thread('a', 100)), record(payload)], 1000)).toThrow();

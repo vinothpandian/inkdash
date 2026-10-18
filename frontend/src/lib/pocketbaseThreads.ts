@@ -19,6 +19,20 @@ export async function createThreadsSource(config: ThreadsConfig, connection: (co
   } catch { throw new Error('Use the dedicated Open Threads user token.'); }
   const user = await pb.collection('open_threads_users').getOne(owner);
   if (user.id !== owner || user.collectionName !== 'open_threads_users') throw new Error('Use the dedicated Open Threads user token.');
+  return connectThreadsSource(pb, owner, connection);
+}
+
+export async function createBrowserThreadsSource(connection: (connected: boolean) => void) {
+  if (!import.meta.env.DEV) throw new Error('Browser thread preview is available only in development.');
+  const response = await fetch('/__open_threads/config', { cache: 'no-store' });
+  if (!response.ok) throw new Error('Open Threads browser preview could not connect. Check the dev server runtime token.');
+  const config = await response.json();
+  if (typeof config.owner !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(config.owner)) throw new Error('Invalid preview account.');
+  const pb = new PocketBase(`${window.location.origin}/__open_threads`, new BaseAuthStore());
+  return connectThreadsSource(pb, config.owner, connection);
+}
+
+function connectThreadsSource(pb: PocketBase, owner: string, connection: (connected: boolean) => void) {
   pb.autoCancellation(false);
   let live = false;
   let disconnected = false;

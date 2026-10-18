@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@/bridge';
 import { projectOpenThreads, type RevisionRecord } from '@/lib/openThreads';
-import { createThreadsSource, threadsError, type ThreadsConfig } from '@/lib/pocketbaseThreads';
+import { createThreadsSource, createBrowserThreadsSource, threadsError, type ThreadsConfig } from '@/lib/pocketbaseThreads';
 import { watchRevisions } from '@/lib/openThreadsSync';
 
 export function useOpenThreads() {
@@ -18,12 +18,18 @@ export function useOpenThreads() {
     const timer = setInterval(() => setNow(Date.now()), 60000);
     async function start() {
       try {
-        const config = await invoke<ThreadsConfig | null>('get_open_threads_config');
-        if (!active) return;
-        if (!config) { setStatus('Not connected'); setError('Set OPEN_THREADS_POCKETBASE_TOKEN in the app environment, then retry.'); return; }
-        const client = await createThreadsSource(config, connected => {
+        const connection = (connected: boolean) => {
           if (active) setStatus(connected ? 'Live' : 'Reconnecting');
-        });
+        };
+        let client;
+        if (import.meta.env.DEV && !window.zero) {
+          client = await createBrowserThreadsSource(connection);
+        } else {
+          const config = await invoke<ThreadsConfig | null>('get_open_threads_config');
+          if (!active) return;
+          if (!config) { setStatus('Not connected'); setError('Set OPEN_THREADS_POCKETBASE_TOKEN in the app environment, then retry.'); return; }
+          client = await createThreadsSource(config, connection);
+        }
         close = client.close;
         if (!active) { close(); return; }
         stop = watchRevisions(client.source, rows => {

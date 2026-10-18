@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { createThreadsSource } from '../src/lib/pocketbaseThreads';
+import { createThreadsSource, createBrowserThreadsSource } from '../src/lib/pocketbaseThreads';
 const token = (claims: object) => `e30.${btoa(JSON.stringify(claims))}.signature`;
 afterEach(() => vi.unstubAllGlobals());
 it('rejects expired tokens and unsafe URLs before making a request', async () => {
@@ -24,4 +24,17 @@ it('verifies the dedicated user and reads revisions in insertion order with owne
 it('does not accept a token for another collection', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'owner', collectionName: 'users' }))));
   await expect(createThreadsSource({ url: 'https://db.vinoth.app', token: token({ id: 'owner', exp: Date.now() / 1000 + 3600 }) }, vi.fn())).rejects.toThrow('dedicated');
+});
+
+it('uses the local preview proxy without receiving or attaching a PocketBase token', async () => {
+  vi.stubGlobal('window', { location: { origin: 'http://127.0.0.1:5173' } });
+  const fetcher = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ owner: 'owner' })))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], totalPages: 1 })));
+  vi.stubGlobal('fetch', fetcher);
+  const client = await createBrowserThreadsSource(vi.fn());
+  expect(await client.source.read()).toEqual([]);
+  expect(fetcher.mock.calls[0][0]).toBe('/__open_threads/config');
+  expect(fetcher.mock.calls[1][0]).toContain('http://127.0.0.1:5173/__open_threads/api/collections/open_threads/records');
+  expect(fetcher.mock.calls[1][1].headers.Authorization).toBeUndefined();
+  client.close();
 });

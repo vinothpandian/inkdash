@@ -4,7 +4,7 @@ Goal: replace the homepage timeline with a read-only, realtime, three-column lis
 
 Architecture: a native bridge provides runtime PocketBase credentials from the existing OPEN_THREADS_POCKETBASE_URL and OPEN_THREADS_POCKETBASE_TOKEN environment variables. A memory-only PocketBase client subscribes before loading ordered revisions, reconstructs the latest thread state, and refreshes after events and reconnects. No credentials go into Vite variables or browser storage.
 
-Design: preserve the calendar, clock, weather and matte visual style. Use three columns at dashboard width, one on narrow screens. Oldest current stretches appear first. Each item shows its name, current elapsed wall time, opening timestamp and cumulative time. The panel scrolls to keep every thread reachable. Loading, empty, missing configuration, stale data and reconnect states are explicit.
+Design: preserve the calendar, clock, weather and matte visual style. Use three columns and three visible rows with scrolling. Recently opened current stretches appear first. Each item shows its opening timestamp at the top, name in the middle and current elapsed wall time at the bottom. The panel scrolls to keep every thread reachable. Loading, empty, missing configuration, stale data and reconnect states are explicit.
 
 - [x] Test revision replay, close/reopen behavior, ordering, malformed data, durations and realtime lifecycle.
 - [x] Implement validated revision projection and a read-only PocketBase subscription service with reconnect reconciliation and cleanup.
@@ -23,3 +23,9 @@ Read-only live check using the existing launchctl token verified the dedicated u
 Full `zig build test` is blocked by existing Zig 0.16 build APIs (`Build.sysroot`) incompatible with installed Zig 0.17. `npm run lint` is blocked by the repository's absent ESLint configuration. Neither result is a passing native app integration check.
 
 Final independent review found a REST fallback gap when initial SSE fails. Added a regression test, confirmed it failed, then made periodic reads independent of subscription success. All 19 tests pass after the fix.
+
+## Browser annotation preview
+
+Added a dev-server-only PocketBase proxy at `/__open_threads`, with loopback and same-origin checks, exact read route/subscription topic allowances, forced owner filtering and server-side runtime credentials. The browser receives only a verified owner ID, records and SSE events. Its PocketBase auth store stays empty. Native and production clients keep their existing bridge path. A shared subscription client keeps replay, reconnect and cleanup behavior identical.
+
+Live read-only verification through the proxy returned 11 revisions and 6 open threads, and both SDK SSE subscriptions connected with an empty browser token. Independent review found no material issues. Tests cover writes, unrelated collections, cross-origin/remote access, unsafe subscriptions, streamed SSE, owner filtering, incorrect user collection, redirects and token-free browser requests.

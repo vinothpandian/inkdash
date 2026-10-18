@@ -68,7 +68,7 @@ Diagnostics:
 
 ## Open Threads dashboard
 
-The homepage shows currently open threads from the same PocketBase account as the Open Threads Raycast extension. It replays the `open_threads` revision log in server insertion order, displays the current stretch and total elapsed wall time, and removes threads when their latest revision is closed. The three-column panel scrolls for longer lists and uses one column on small screens.
+The homepage shows currently open threads from the same PocketBase account as the Open Threads Raycast extension. It replays the `open_threads` revision log in server insertion order, displays the current stretch’s opening timestamp and elapsed wall time, and removes threads when their latest revision is closed. The compact panel shows three rows and three columns, with recently opened threads first and scrolling for longer lists.
 
 Provide runtime environment variables to the **native Inkdash process**:
 
@@ -79,6 +79,6 @@ On macOS, Inkdash also reads values set through `launchctl setenv`, so it can sh
 
 Credentials are passed through an allowlisted native bridge command into a memory-only PocketBase client. They are never built into frontend assets or written to browser storage. Use only the dedicated user token. The dashboard makes no record writes. The token retains the permissions granted to that user by PocketBase.
 
-Updates use PocketBase's SSE subscription, with a full ordered read after events/reconnects and every 30 seconds to reconcile missed events. Elapsed labels update every minute. During outages, the panel retains the last successful snapshot and marks its connection state. Invalid payloads leave that snapshot intact and show an error. Plain frontend browser previews cannot access the native environment bridge.
+Updates use PocketBase's SSE subscription, with a full ordered read after events/reconnects and every 30 seconds to reconcile missed events. Elapsed labels update every minute. During outages, the panel retains the last successful snapshot and marks its connection state. Invalid payloads leave that snapshot intact and show an error. During `npm run dev`, browser previews use a loopback-only Vite middleware to read the same real PocketBase records and realtime stream. The middleware reads the existing environment or launchctl token on the server and sends only the owner ID and thread data to the browser. It permits thread reads and realtime subscription requests, enforces the owner filter, and blocks record writes and cross-origin access. No mock data is used. This middleware is absent from production builds; packaged apps continue to use the native bridge.
 
 Frontend validation: `npm test --prefix frontend` and `npm run build --prefix frontend`.
