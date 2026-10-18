@@ -286,3 +286,14 @@
     }
   }
 }
+
+.threads-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground)) transparent;
+  scrollbar-gutter: stable;
+}
+.threads-scroll:focus-visible {
+  outline: 2px solid hsl(var(--foreground));
+  outline-offset: 2px;
+  border-radius: 4px;
+}

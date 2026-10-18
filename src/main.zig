@@ -37,6 +37,13 @@ const App = struct {
         });
     }
 
+    fn handleGetOpenThreadsConfig(context: *anyopaque, invocation: bridge.Invocation, output: []u8) anyerror![]const u8 {
+        _ = invocation;
+        _ = output;
+        const self: *App = @ptrCast(@alignCast(context));
+        return @import("open_threads_config.zig").load(self.allocator, self.io, self.env_map);
+    }
+
     fn handleGetConfig(context: *anyopaque, invocation: bridge.Invocation, output: []u8) anyerror![]const u8 {
         _ = invocation;
         _ = output;
@@ -104,6 +111,7 @@ pub fn main(init: std.process.Init) !void {
     };
 
     const policies = [_]bridge.CommandPolicy{
+        .{ .name = "app.get_open_threads_config", .origins = &allowed_origins },
         .{ .name = "app.get_config", .origins = &allowed_origins },
         .{ .name = "app.save_config", .origins = &allowed_origins },
         .{ .name = "app.get_timeline", .origins = &allowed_origins },
@@ -112,6 +120,7 @@ pub fn main(init: std.process.Init) !void {
     };
 
     const sync_handlers = [_]bridge.Handler{
+        .{ .name = "app.get_open_threads_config", .context = &app_state, .invoke_fn = App.handleGetOpenThreadsConfig },
         .{ .name = "app.get_config", .context = &app_state, .invoke_fn = App.handleGetConfig },
         .{ .name = "app.save_config", .context = &app_state, .invoke_fn = App.handleSaveConfig },
         .{ .name = "app.get_timeline", .context = &app_state, .invoke_fn = App.handleGetTimeline },
@@ -160,6 +169,7 @@ test "app bridge policies are non-empty" {
 }
 
 test {
+    _ = @import("open_threads_config.zig");
     _ = @import("app_log.zig");
     _ = @import("config.zig");
     _ = @import("timeline.zig");

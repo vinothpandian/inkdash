@@ -4,3 +4,5 @@ export { WeatherWidget } from './WeatherWidget';
 export { TimezoneCard } from './TimezoneCard';
 export { StockCard } from './StockCard';
 export { DayTimelineWidget } from './DayTimelineWidget';
+
+export { OpenThreadsWidget } from './OpenThreadsWidget';
