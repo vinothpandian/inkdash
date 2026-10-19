@@ -1,4 +1,5 @@
-export interface Stretch { startedAt: number; endedAt?: number }
+export interface Pause { pausedAt: number; resumedAt?: number }
+export interface Stretch { startedAt: number; endedAt?: number; pauses?: Pause[]; endReason?: 'restarted' }
 export interface Thread { id: string; name: string; stretches: Stretch[] }
 export interface RevisionRecord { revision: string; payload: unknown }
 export interface OpenThread extends Thread { openedAt: number; elapsed: number; total: number }
@@ -14,9 +15,36 @@ function parseThread(value: unknown): Thread {
   t.stretches.forEach((s, i) => {
     if (!s || !timestamp(s.startedAt) || s.startedAt < previousEnd ||
       (s.endedAt !== undefined ? !timestamp(s.endedAt) || s.endedAt < s.startedAt : i !== t.stretches.length - 1)) throw new Error('Invalid thread stretches');
+    if (s.endReason !== undefined && (s.endReason !== 'restarted' || s.endedAt === undefined)) throw new Error('Invalid run end reason');
+    if (s.pauses !== undefined) {
+      if (!Array.isArray(s.pauses)) throw new Error('Invalid pause history');
+      let previous = s.startedAt;
+      s.pauses.forEach((pause, index) => {
+        if (!pause || typeof pause !== 'object' || !timestamp(pause.pausedAt) || pause.pausedAt < previous ||
+          (s.endedAt !== undefined && pause.pausedAt > s.endedAt)) throw new Error('Invalid pause time');
+        if (pause.resumedAt !== undefined) {
+          if (!timestamp(pause.resumedAt) || pause.resumedAt < pause.pausedAt ||
+            (s.endedAt !== undefined && pause.resumedAt > s.endedAt)) throw new Error('Invalid resume time');
+          previous = pause.resumedAt;
+        } else if (index !== s.pauses!.length - 1) throw new Error('Unfinished pause must be last');
+      });
+    }
     previousEnd = s.endedAt ?? s.startedAt;
   });
   return t;
+}
+
+function isActive(thread: Thread): boolean {
+  const current = thread.stretches[thread.stretches.length - 1];
+  const pauses = current.pauses ?? [];
+  return current.endedAt === undefined && (!pauses.length || pauses[pauses.length - 1].resumedAt !== undefined);
+}
+
+function stretchElapsed(stretch: Stretch, now: number): number {
+  const end = stretch.endedAt ?? now;
+  const paused = (stretch.pauses ?? []).reduce((sum, pause) =>
+    sum + Math.max(0, Math.min(pause.resumedAt ?? end, end) - pause.pausedAt), 0);
+  return Math.max(0, end - stretch.startedAt - paused);
 }
 
 // Records must arrive in server insertion order, matching Open Threads' merge rule.
@@ -27,10 +55,10 @@ export function projectOpenThreads(records: readonly RevisionRecord[], now: numb
     const thread = parseThread(record.payload);
     latest.set(thread.id, thread);
   }
-  return [...latest.values()].filter(t => t.stretches[t.stretches.length - 1].endedAt === undefined)
+  return [...latest.values()].filter(isActive)
     .map(t => {
       const openedAt = t.stretches[t.stretches.length - 1].startedAt;
-      return { ...t, openedAt, elapsed: Math.max(0, now - openedAt), total: t.stretches.reduce((sum, s) => sum + Math.max(0, (s.endedAt ?? now) - s.startedAt), 0) };
+      return { ...t, openedAt, elapsed: stretchElapsed(t.stretches[t.stretches.length - 1], now), total: t.stretches.reduce((sum, s) => sum + stretchElapsed(s, now), 0) };
     }).sort((a, b) => b.openedAt - a.openedAt || a.id.localeCompare(b.id));
 }
 

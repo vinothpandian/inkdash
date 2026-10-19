@@ -68,7 +68,7 @@ Diagnostics:
 
 ## Open Threads dashboard
 
-The homepage shows currently open threads from the same PocketBase account as the Open Threads Raycast extension. It replays the `open_threads` revision log in server insertion order, displays the current stretch’s opening timestamp and elapsed wall time, and removes threads when their latest revision is closed. The compact panel shows three rows and three columns, with recently opened threads first and scrolling for longer lists.
+The homepage shows currently open threads from the same PocketBase account as the Open Threads Raycast extension. It replays the `open_threads` revision log in server insertion order, displays the current stretch’s opening timestamp and elapsed wall time, and shows only active threads from each latest revision. Paused and completed threads stay hidden; resumed counters exclude all paused intervals, and restarting resets the current counter while preserving history. The compact panel shows three rows and three columns, with recently opened threads first and scrolling for longer lists.
 
 Provide runtime environment variables to the **native Inkdash process**:
 
