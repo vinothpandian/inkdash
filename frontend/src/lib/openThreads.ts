@@ -1,6 +1,6 @@
 export interface Pause { pausedAt: number; resumedAt?: number }
 export interface Stretch { startedAt: number; endedAt?: number; pauses?: Pause[]; endReason?: 'restarted' }
-export interface Thread { id: string; name: string; stretches: Stretch[] }
+export interface Thread { id: string; name: string; stretches: Stretch[]; deleted?: true }
 export interface RevisionRecord { revision: string; payload: unknown }
 export interface OpenThread extends Thread { openedAt: number; elapsed: number; total: number }
 
@@ -10,6 +10,7 @@ function timestamp(value: unknown): value is number {
 function parseThread(value: unknown): Thread {
   if (!value || typeof value !== 'object') throw new Error('Invalid thread data');
   const t = value as Thread;
+  if (Object.prototype.hasOwnProperty.call(t, 'deleted') && t.deleted !== true) throw new Error('Invalid deletion flag');
   if (typeof t.id !== 'string' || !t.id || typeof t.name !== 'string' || !t.name.trim() || !Array.isArray(t.stretches) || !t.stretches.length) throw new Error('Invalid thread data');
   let previousEnd = 0;
   t.stretches.forEach((s, i) => {
@@ -35,6 +36,7 @@ function parseThread(value: unknown): Thread {
 }
 
 function isActive(thread: Thread): boolean {
+  if (thread.deleted) return false;
   const current = thread.stretches[thread.stretches.length - 1];
   const pauses = current.pauses ?? [];
   return current.endedAt === undefined && (!pauses.length || pauses[pauses.length - 1].resumedAt !== undefined);
@@ -53,7 +55,8 @@ export function projectOpenThreads(records: readonly RevisionRecord[], now: numb
   for (const record of records) {
     if (typeof record.revision !== 'string' || !record.revision) throw new Error('Invalid revision');
     const thread = parseThread(record.payload);
-    latest.set(thread.id, thread);
+    // Match Open Threads: deletion wins over later uploads from a stale device.
+    if (!latest.get(thread.id)?.deleted) latest.set(thread.id, thread);
   }
   return [...latest.values()].filter(isActive)
     .map(t => {

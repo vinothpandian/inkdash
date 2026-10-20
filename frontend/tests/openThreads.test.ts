@@ -3,6 +3,15 @@ import { projectOpenThreads, formatElapsed } from '../src/lib/openThreads';
 const thread = (id: string, start: number, end?: number) => ({ id, name: id, stretches: [{ startedAt: start, ...(end === undefined ? {} : { endedAt: end }) }] });
 const record = (payload: unknown) => ({ revision: 'revision', payload });
 describe('revision projection', () => {
+  it('keeps deleted threads hidden even after a stale device uploads an active revision', () => {
+    const active = thread('deleted', 100);
+    const deleted = { ...active, deleted: true };
+    expect(projectOpenThreads([record(active), record(deleted)], 1000)).toEqual([]);
+    expect(projectOpenThreads([record(deleted), record(active), record(thread('visible', 200))], 1000).map(t => t.id)).toEqual(['visible']);
+  });
+  it('rejects malformed deletion flags', () => {
+    expect(() => projectOpenThreads([record({ ...thread('a', 100), deleted: false })], 1000)).toThrow();
+  });
   it('replays closed and reopened threads in insertion order', () => {
     const reopened = { id: 'a', name: 'a', stretches: [{ startedAt: 100, endedAt: 200 }, { startedAt: 500 }] };
     expect(projectOpenThreads([record(thread('a', 100)), record(thread('a', 100, 200)), record(reopened)], 1000))

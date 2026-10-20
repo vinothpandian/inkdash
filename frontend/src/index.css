@@ -135,6 +135,7 @@
   }
 
   html {
+    font-size: 14px;
     /* Prevent overscroll bounce on iOS */
     overscroll-behavior: none;
   }
