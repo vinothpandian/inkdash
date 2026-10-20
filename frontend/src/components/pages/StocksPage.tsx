@@ -16,7 +16,7 @@ export function StocksPage() {
     return (
       <div className="h-full w-full page-padding flex flex-col overflow-hidden">
         <div className="flex-1 flex items-center justify-center min-h-0">
-          <div className="grid grid-cols-2 gap-4 w-full max-w-3xl h-full max-h-[420px]">
+          <div className="grid grid-cols-2 gap-4 w-full h-full max-h-[420px]">
             {Array.from({ length: 4 }).map((_, i) => (
               <Card key={i} className="h-full animate-pulse">
                 <div className="h-full flex flex-col p-4">
@@ -52,7 +52,7 @@ export function StocksPage() {
     <div className="h-full w-full page-padding flex flex-col overflow-hidden">
       {/* Full-height centered grid */}
       <div className="flex-1 flex items-center justify-center min-h-0">
-        <div className="grid grid-cols-2 gap-4 w-full max-w-3xl h-full max-h-[420px]">
+        <div className="grid grid-cols-2 gap-4 w-full h-full max-h-[420px]">
           {stocks.map((stock) => (
             <StockCard key={stock.ticker} stock={stock} />
           ))}
