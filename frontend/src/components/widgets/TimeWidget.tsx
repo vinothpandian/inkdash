@@ -107,17 +107,17 @@ export function TimeWidget() {
         </div>
 
         {/* Day of week */}
-        <div className="text-base text-muted-foreground/70">
+        <div className="text-base text-muted-foreground">
           {dayOfWeek}
         </div>
 
         {/* Large time display */}
-        <div className="text-[3.5rem] font-light-numbers text-foreground mt-2 tracking-tight">
+        <div className="text-[3.5rem] whitespace-nowrap font-light-numbers text-foreground mt-2 tracking-tight">
           {timeString}
         </div>
 
         {/* Timezone list with working hours bars */}
-        <div className="mt-3 space-y-0.5 mx-auto">
+        <div className="mt-4 space-y-2 mx-auto">
           {timezones.map((tz) => {
             const { time: tzTime, ampm } = getTimezoneTime(tz.timezone);
             return (

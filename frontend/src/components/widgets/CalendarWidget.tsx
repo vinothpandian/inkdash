@@ -45,7 +45,7 @@ export function CalendarWidget() {
 
   return (
     <Card className="h-full">
-      <CardContent className="h-full flex flex-col justify-center p-4">
+      <CardContent className="calendar-content h-full flex flex-col justify-center p-4">
         {/* Month and Year */}
         <div className="text-xl font-medium-labels mb-3">
           {monthName} <span className="text-muted-foreground font-normal">{currentYear}</span>
@@ -69,10 +69,10 @@ export function CalendarWidget() {
             <div
               key={index}
               className={`
-                flex items-center justify-center text-base py-1
+                calendar-day flex items-center justify-center text-base
                 ${
                   day === currentDate
-                    ? 'bg-foreground text-background rounded-full font-medium aspect-square'
+                    ? 'bg-foreground text-background rounded-full font-medium'
                     : 'text-foreground'
                 }
               `}

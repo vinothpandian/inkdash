@@ -298,3 +298,148 @@
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Home: a compact daily overview above an easy-to-scan thread list. */
+.overview-page {
+  padding: 24px;
+  overflow-y: auto;
+  --muted-foreground: 30 6% 42%;
+}
+.dark .overview-page {
+  --muted-foreground: 30 6% 66%;
+}
+.overview-layout {
+  display: grid;
+  grid-template-rows: minmax(320px, 1fr) minmax(260px, 1fr);
+  gap: 20px;
+  height: 100%;
+  min-height: 600px;
+}
+.overview-widgets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  min-height: 0;
+}
+.overview-widgets [data-slot="card-content"] {
+  padding: 24px;
+}
+.calendar-content {
+  width: 100%;
+  max-width: 380px;
+  margin-inline: auto;
+}
+.calendar-day {
+  width: 32px;
+  height: 32px;
+  justify-self: center;
+}
+.threads-panel {
+  padding: 12px 24px 20px;
+}
+.threads-header {
+  padding-bottom: 8px;
+}
+.threads-refresh {
+  position: relative;
+  min-height: 32px;
+  padding: 4px 8px;
+  color: hsl(var(--muted-foreground));
+}
+.threads-connection-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e45d59;
+}
+.threads-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.thread-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 88px;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid hsl(var(--border));
+}
+.thread-title {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.thread-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.thread-since {
+  color: hsl(var(--muted-foreground));
+  font-size: 14px;
+  line-height: 1.5;
+}
+.thread-elapsed {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (max-width: 900px) {
+  .overview-page { padding: 16px; }
+  .overview-layout, .overview-widgets { gap: 16px; }
+  .overview-widgets [data-slot="card-content"] { padding: 16px; }
+  .overview-widgets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .overview-widgets > :last-child { grid-column: 1 / -1; min-height: 280px; }
+  .overview-layout { height: auto; grid-template-rows: auto minmax(320px, 45vh); }
+  .overview-widgets > :not(:last-child) { min-height: 320px; }
+  .threads-panel { padding: 20px; }
+}
+@media (max-width: 540px) {
+  .overview-widgets { grid-template-columns: minmax(0, 1fr); }
+  .threads-list { grid-template-columns: minmax(0, 1fr); }
+  .thread-row { gap: 12px; }
+  .thread-title, .thread-elapsed { font-size: 16px; }
+  .thread-since { font-size: 12px; }
+}
+
+/* The physical dashboard is 1024 × 600. Keep its complete overview in view. */
+@media (min-width: 901px) and (max-height: 700px) {
+  .overview-page { padding: 16px; overflow: hidden; }
+  .overview-layout {
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+  }
+  .overview-widgets { gap: 20px; }
+  .overview-widgets [data-slot="card-content"] { padding: 16px; }
+  .calendar-day { width: 26px; height: 26px; }
+  .threads-panel { padding: 8px 16px 12px; }
+  .threads-header { padding-bottom: 4px; }
+  .threads-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+  .thread-row {
+    min-height: 100px;
+    padding: 12px 0;
+    gap: 8px;
+  }
+  .thread-title { font-size: 16px; line-height: 1.4; }
+  .thread-since, .thread-elapsed { font-size: 12px; }
+  .weather-chart { height: 128px; }
+}

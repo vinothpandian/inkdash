@@ -2,11 +2,11 @@ import { CalendarWidget, TimeWidget, WeatherWidget, OpenThreadsWidget } from '@/
 
 export function OverviewPage() {
   return (
-    <div className="h-full w-full page-padding">
-      {/* Reserve more room for the calendar and clocks; threads scroll within their row. */}
-      <div className="h-full min-h-0 grid grid-rows-[minmax(0,3fr)_minmax(0,2fr)] gap-3 w-full">
+    <div className="overview-page h-full w-full">
+      {/* Keep the daily overview together and let threads scroll independently. */}
+      <div className="overview-layout">
         {/* Top Row - 3 equal width cards */}
-        <div className="min-h-0 grid grid-cols-3 gap-3">
+        <div className="overview-widgets">
           <CalendarWidget />
           <TimeWidget />
           <WeatherWidget />
